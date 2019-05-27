@@ -91,16 +91,17 @@ uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferPreviousModelView;
 uniform mat4 gbufferPreviousModelViewInverse;
-uniform int frameCounter;
 
 uniform float centerDepth;
-uniform float frameTimeCounter;
 uniform vec3 cameraPosition;
 uniform vec3 previousCameraPosition;
 
 uniform float viewWidth;
 uniform float viewHeight;
 uniform int fogMode;
+uniform int frameCounter;
+uniform float frameTime;
+uniform float frameTimeCounter;
 
 const int FOGMODE_LINEAR = 9729;
 const int FOGMODE_EXP = 2048;
