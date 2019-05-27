@@ -1,0 +1,2 @@
+#define CurrentBuffer
+#define PreviousBuffer
