@@ -5,7 +5,7 @@ gin vec4 texcoord;
 
 
 #ifdef FSH
-/* DRAWBUFFERS:45670 */
+/* DRAWBUFFERS:4567 */
 #endif
 
 void main(){
@@ -17,10 +17,10 @@ void main(){
         
     #endif
     #ifdef FSH
+        // clear some gbuffers images before render-passes
         gl_FragData[0] = vec4(0.f);
-        gl_FragData[1] = vec4(0.f);//texture(gbuffers1,texcoord.xy);
-        gl_FragData[2] = vec4(0.f);//texture(gbuffers2,texcoord.xy);
-        gl_FragData[3] = vec4(0.f);//texture(gbuffers3,texcoord.xy);
-        gl_FragData[4] = texture(gbuffers0,texcoord.xy);
+        gl_FragData[1] = vec4(0.f);
+        gl_FragData[2] = vec4(0.f);
+        gl_FragData[3] = vec4(0.f);
     #endif
 }

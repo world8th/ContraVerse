@@ -5,7 +5,7 @@ gin vec4 texcoord;
 uniform ivec2 atlasSize;
 
 #ifdef FSH
-/* DRAWBUFFERS:4567 */
+/* DRAWBUFFERS:0 */
 #endif
 
 const int PRETEXTURED = 0, COORDINATED = 1;
