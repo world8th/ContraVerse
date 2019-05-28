@@ -2,9 +2,9 @@
 #if defined(FSH) && defined(COMPOSITE)
 /*
 const int colortex0Format = RGBA32F;
-const int colortex1Format = RGBA16F;
-const int colortex2Format = RGBA16F;
-const int colortex3Format = RGBA16F;
+const int colortex1Format = RGBA32F;
+const int colortex2Format = RGBA32F;
+const int colortex3Format = RGBA32F;
 const int colortex4Format = RGBA32F;
 const int colortex5Format = RGBA32F;
 const int colortex6Format = RGBA32F;
