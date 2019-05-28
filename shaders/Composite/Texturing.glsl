@@ -1,4 +1,5 @@
 #include "/Globals/Header.glsl"
+#include "/Utils/Sky.glsl"
 
 gin vec4 texcoord;
 
@@ -45,7 +46,36 @@ void main(){
             
         }
 
+        const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,1.f)),2.0f.xx,-1.f.xx),0.f,1.f);
+
+        // fill main buffer with sky-color
+        float filled = texture(gbuffers0,fcoord.xy).w;
+        if (fcoord.x < 0.5f && filled < 0.1f) {
+            vec4 wPositionView = CameraSpaceToWorldSpace(vec4(0.f.xxx,1.f));
+            vec4 wSunPosition = CameraSpaceToWorldSpace(vec4(sunPosition,1.f)) - vec4(wPositionView.xyz,0.f);
+            vec4 wPosition = CameraSpaceToWorldSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
+            vec4 wPositionRelative = wPosition-vec4(wPositionView.xyz,0.f);
+
+            colp[1] = atmosphere(
+                normalize(wPositionRelative.xyz),                // normalized ray direction
+                wPositionRelative.xyz+vec3(0.f,6372e3f,0.f),     // planet position
+                wSunPosition.xyz,                                // position of the sun
+                40.0f,                                           // intensity of the sun
+                6371e3f,                                         // radius of the planet in meters
+                6471e3f,                                         // radius of the atmosphere in meters
+                vec3(5.5e-6, 13.0e-6, 22.4e-6),                  // Rayleigh scattering coefficient
+                21e-6f,                                          // Mie scattering coefficient
+                8e3f,                                            // Rayleigh scale height
+                1.2e3f,                                          // Mie scale height
+                0.758f                                           // Mie preferred scattering direction
+            ).xyz, filled = 1.f;
+
+            //colp[1] = SkyBox(normalize(wPositionRelative.xyz)*1.f,normalize(wSunPosition.xyz)).xyz, filled = 1.f;
+
+            //colp[1] = SkyColor(wPosition.xyz, normalize(wSunPosition.xyz)).xyz, filled = 1.f;
+        }
+
         // send modified color 
-        gl_FragData[0] = vec4(pack3x2(colp),texture(gbuffers0,fcoord.xy).w);
+        gl_FragData[0] = vec4(pack3x2(colp),filled);
     #endif
 }

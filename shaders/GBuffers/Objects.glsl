@@ -126,7 +126,7 @@ void main() {
     if (all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx)) && facing && alpas > 0.f) {
 		gl_FragDepth = gl_FragCoord.z;
 		//gl_FragData[0] = vec4(color.xyz,alpha);
-#if defined(BLOCK) || defined(WATER)
+#if defined(BLOCK) || defined(WATER) || defined(TERRAIN)
 		const bool deferred = isSemiTransparent == 0;
 #else
 		const bool deferred = false;

@@ -102,6 +102,27 @@ uniform int fogMode;
 uniform int frameCounter;
 uniform float frameTime;
 uniform float frameTimeCounter;
+uniform vec3 sunPosition;
+uniform int worldTime;
+
+//uniform vec3 sunAngle;
 
 const int FOGMODE_LINEAR = 9729;
 const int FOGMODE_EXP = 2048;
+
+
+
+vec4 ScreenSpaceToCameraSpace(in vec4 screenSpace){
+    const vec4 cameraSpaceProj = gbufferProjectionInverse * screenSpace;
+    return cameraSpaceProj/cameraSpaceProj.w;
+}
+
+vec4 CameraSpaceToScreenSpace(in vec4 cameraSpace){
+    const vec4 screenSpaceProj = gbufferProjection * cameraSpace;
+    return screenSpaceProj/screenSpaceProj.w;
+}
+
+vec4 CameraSpaceToWorldSpace(in vec4 cameraSpace){
+    const vec4 worldSpaceProj = gbufferModelViewInverse*cameraSpace;
+    return worldSpaceProj/worldSpaceProj.w;
+}
