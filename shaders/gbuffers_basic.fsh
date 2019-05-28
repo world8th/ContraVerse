@@ -4,4 +4,4 @@
 #define FSH
 #define BASIC
 #define GBUFFERS
-#include "/GBuffers/Objects.glsl"
+#include "/GBuffers/Basic.glsl"

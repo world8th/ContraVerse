@@ -118,11 +118,16 @@ void main() {
 	color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
 	
     gl_FragDepth = gl_FragCoord.z+2.f;
-    if (all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx)) && facing) {
+	gl_FragData[0] = vec4(0.f);
+	gl_FragData[1] = vec4(0.f);
+	gl_FragData[2] = vec4(0.f);
+	gl_FragData[3] = vec4(0.f);
+	
+    if (all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx)) && facing && alpas > 0.f) {
 		gl_FragDepth = gl_FragCoord.z;
 		//gl_FragData[0] = vec4(color.xyz,alpha);
-#if defined(TERRAIN) || defined(BLOCK) || defined(WATER)
-		bool deferred = isSemiTransparent == 0;
+#if defined(BLOCK) || defined(WATER)
+		const bool deferred = isSemiTransparent == 0;
 #else
 		const bool deferred = false;
 #endif
