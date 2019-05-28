@@ -10,7 +10,8 @@ uniform ivec2 atlasSize;
 
 const int PRETEXTURED = 0, COORDINATED = 1;
 
-
+// TODO: add to definition settings officially 
+#define TEXTURE_SIZE 16 
 
 void main(){
     #ifdef VSH
@@ -30,7 +31,16 @@ void main(){
 
         // special edition
         if (mode == COORDINATED) {
-            colp[1].xyz *= texture(colortex3,colp[0].xy).xyz;
+            vec2 texcoord = colp[0].xy;
+
+            //texcoord *= TEXTURE_SIZE;
+            //vec2 textile = floor(texcoord);
+            //vec2 texofft = fract(texcoord);
+
+            // TODO: Parallax Occlusion Mapping in deferred phase... 
+            
+
+            colp[1].xyz *= texture(colortex3,texcoord).xyz;
         } else {
             
         }
