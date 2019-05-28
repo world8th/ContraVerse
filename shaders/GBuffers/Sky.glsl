@@ -99,13 +99,18 @@ void main() {
 	}
     
 
-	gl_FragDepth = 2.1f;
 #ifdef SKYTEXTURED
     vec4 color = texture(tex, adjtx.st) * texture(lightmap, flmcoord.st) * fcolor;
 #else
 	vec4 color = fcolor;
 #endif
 	color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
+
+    gl_FragDepth = gl_FragCoord.z+2.1f;
+	gl_FragData[0] = vec4(0.f);
+	gl_FragData[1] = vec4(0.f);
+	gl_FragData[2] = vec4(0.f);
+	gl_FragData[3] = vec4(0.f);
 
     float alpha = color.w, alpas = random(vpos.xyz)<alpha ? 1.f : 0.f; 
 	if ( all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx)) ) {
