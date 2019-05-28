@@ -5,7 +5,7 @@ gin vec4 texcoord;
 uniform ivec2 atlasSize;
 
 #ifdef FSH
-/* DRAWBUFFERS:0 */
+/* DRAWBUFFERS:4 */
 #endif
 
 const int PRETEXTURED = 0, COORDINATED = 1;
@@ -34,11 +34,6 @@ void main(){
         } else {
             
         }
-
-        gl_FragData[0] = texture(gbuffers0,fcoord.xy);
-        gl_FragData[1] = texture(gbuffers1,fcoord.xy);
-        gl_FragData[2] = texture(gbuffers2,fcoord.xy);
-        gl_FragData[3] = texture(gbuffers3,fcoord.xy);
 
         // send modified color 
         gl_FragData[0] = vec4(pack3x2(colp),texture(gbuffers0,fcoord.xy).w);
