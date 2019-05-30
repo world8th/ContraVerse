@@ -1,4 +1,6 @@
 // configs of buffers
+const int shadowMapResolution = 8192;
+
 #if defined(FSH) && defined(COMPOSITE)
 /*
 const int colortex0Format = RGBA32F;
@@ -20,9 +22,6 @@ const bool colortex7Clear = false;
 const int depthtex0Format = R32F;
 const int depthtex1Format = R32F;
 */
-
-const int shadowMapResolution = 8192;
-
 
 // reserved and used by composite and some deferred programs (but may be filled from GBuffers)
 uniform sampler2D colortex0;

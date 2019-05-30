@@ -138,7 +138,7 @@ void main() {
     vec3 centerOfTriangle = CenterOfTriangle(vertices);
     vec3 normalOfTriangle = NormalOfTriangle(vertices);
     vec3 offsetOfVoxel = CalcVoxelOfBlock(centerOfTriangle,normalOfTriangle);
-    if (FilterForVoxel(offsetOfVoxel, normalOfTriangle)) validVoxel = true;
+    if (FilterForVoxel(offsetOfVoxel,normalOfTriangle)) validVoxel = true;
     vec3 tileSpaceBlock = VoxelToTileSpace(offsetOfVoxel);
 
     // 
@@ -153,8 +153,8 @@ void main() {
 
             // convert into voxel and texture space (simple way)
             vertex.xyz -= offsetOfVoxel; // get coordinate relate of voxel 
-            vertex.xyz += VoxelToTileSpace(offsetOfVoxel); // get voxel coordinate relate of tile-space
-            vertex.xyz = vec3(VoxelToTextureSpace(vertex).xyz); // get voxel re-coordination into texture space
+            vertex.xyz += tileSpaceBlock; // get voxel coordinate relate of tile-space
+            vertex.xyz = VoxelToTextureSpace(vertex.xyz).xyz; // get voxel re-coordination into texture space
 
             // integrity normal 
             fnormal *= gbufferModelViewInverse, ftangent *= gbufferModelViewInverse;
@@ -205,12 +205,8 @@ void main() {
     if (all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx))) {
 		gl_FragDepth = gl_FragCoord.z; // in voxel space, used only fomally 
 		//gl_FragData[0] = vec4(color.xyz,alpha);
-#if defined(BLOCK) || defined(WATER) || defined(TERRAIN)
-		const bool deferred = isSemiTransparent == 0;
-#else
-		const bool deferred = false;
-#endif
-		if (isVoxel) {
+
+		if (isVoxel == 1) {
             // voxel can store only 8-bit color... 
             const vec2 tile = vec2(atlasSize.xy)/TEXTURE_SIZE.xx, ftex = adjtx.xy*tile, ftxt = floor(ftex);
             const float vxcolr = uintBitsToFloat(packUnorm4x8(vec4(fcolor.xyz*texture(lightmap,flmcoord.st).xyz,0.f))); // TODO: better pre-baked emission support

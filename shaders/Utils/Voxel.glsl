@@ -15,10 +15,10 @@ vec3 VoxelToTileSpace(in vec3 voxelPosition){
 }
 
 // convert voxel into rendering space (fetching space)
-vec3 VoxelToTextureSpace(in vec3 voxelPosition){
-    const vec3 tileSpace = VoxelToTileSpace(voxelPosition);
-    const vec2 flatSpace = vec2(tileSpace.x,tileSpace.y*aeraSize.z+tileSpace.z);
-    const vec2 textSpaceSize = vec2(aeraSize.x,aeraSize.z*aeraSize.y);
+vec3 VoxelToTextureSpace(in vec3 tileSpace){
+    //vec3 tileSpace = VoxelToTileSpace(voxelPosition);
+    vec2 flatSpace = vec2(tileSpace.x,tileSpace.y*aeraSize.z+tileSpace.z);
+    vec2 textSpaceSize = vec2(aeraSize.x,aeraSize.z*aeraSize.y);
 
     // shift into unsigned space 
     flatSpace += textSpaceSize*0.5f;
@@ -30,7 +30,7 @@ vec3 VoxelToTextureSpace(in vec3 voxelPosition){
     flatSpace /= float(shadowMapResolution);
 
     // return pixel corrected
-    return vec3(flatSpace,(voxelPosition.y+aeraSize.y*0.5f)/aeraSize.y);
+    return vec3(flatSpace,(tileSpace.y+aeraSize.y*0.5f)/aeraSize.y);
 }
 
 // get valid surface... 
