@@ -20,7 +20,7 @@ void main(){
 
         fcoord *= vec2(2.f,1.f);
         //colp[1] = texture(shadowcolor0,vec2(fcoord)).xyz;
-        colp[1] = texture(shadowcolor0,vec2(fcoord*buffersize/shadowsize)).xyz;
+        //colp[1] = texture(shadowcolor0,vec2(fcoord*buffersize/shadowsize)).xyz;
 
         gl_FragColor = vec4(clamp(colp[1].xyz,0.f.xxx,1.f.xxx),1.f);
     #endif

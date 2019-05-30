@@ -5,7 +5,7 @@ const vec3 tileSize = vec3(16.f,1.f,16.f), aeraSize = vec3(128.f,64.f,128.f);
 #define SHADOW_SIZE_RATE (SHADOW_SIZE/float(shadowMapResolution))
 
 vec3 TileOfVoxel(in vec3 currentVoxel){
-    return floor(currentVoxel / tileSize) * tileSize;
+    return floor(round(currentVoxel) / tileSize) * tileSize;
 }
 
 // convert voxel into rendering space (fetching space)
