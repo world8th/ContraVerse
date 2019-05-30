@@ -54,9 +54,9 @@ void main() {
 #ifdef VSH
 
 	// 
-	vec2 texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
-	vec2 midcoord = (gl_TextureMatrix[0] * vec4(mc_midTexCoord,0.0f,1.f)).st;
-	vec2 texcoordminusmid = texcoord-midcoord;
+	const vec2 texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
+	const vec2 midcoord = (gl_TextureMatrix[0] * vec4(mc_midTexCoord,0.0f,1.f)).st;
+	const vec2 texcoordminusmid = texcoord-midcoord;
 
 	// 
 	vtexcoordam.pq  = abs(texcoordminusmid)*2;
@@ -69,13 +69,13 @@ void main() {
 	vcolor = gl_Color;
 
 	// 
-	vec4 worldSpace = gbufferModelViewInverse * gbufferProjectionInverse * gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
-	vec4 viewSpace = gbufferModelView * worldSpace; viewSpace.xyz /= viewSpace.w;
+	vec4 scrnSpace = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+	vec4 viewSpace = gbufferProjectionInverse * scrnSpace; viewSpace.xyz /= viewSpace.w;
 
 	// 
 	vnormal = correctNormal(), vtangent = vec4(at_tangent.xyz, 0.f);
-	gl_Position = gbufferProjection * gbufferModelView * worldSpace;
-	gl_FogFragCoord = length((gbufferModelView * worldSpace).xyz);
+	gl_Position = scrnSpace;
+	gl_FogFragCoord = length(viewSpace.xyz);
 
 #endif
 
@@ -94,19 +94,16 @@ void main() {
 	vpos.xyz /= vpos.w;
 
 	const vec2 adjtx = ftexcoord.xy*ftexcoordam.zw+ftexcoordam.xy;
-    const vec4 normal = fnormal;
+    const vec4 tnormal = fnormal; // TODO: modify normals for transparents
 	const vec4 tangent = ftangent;
 
 #if defined(TERRAIN) || defined(BLOCK) || defined(WATER)
-	bool facing = dot(normalize(vpos.xyz),normalize(normal.xyz))<=0.f;
+	bool facing = dot(normalize(vpos.xyz),normalize(tnormal.xyz))<=0.f;
 #else
 	bool facing = true;
 #endif
 
 	if (!facing) discard;
-
-
-	const vec4 tnormal = normal; // TODO: modify normals for transparents
 
 	float fogFactor = 1.f;
 	if (fogMode == FOGMODE_EXP) {
@@ -129,7 +126,7 @@ void main() {
     if (all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx)) && facing && alpas > 0.f) {
 		gl_FragDepth = gl_FragCoord.z;
 		//gl_FragData[0] = vec4(color.xyz,alpha);
-#if defined(BLOCK) || defined(WATER) || defined(TERRAIN)
+#if defined(WATER) || defined(TERRAIN)
 		const bool deferred = isSemiTransparent == 0;
 #else
 		const bool deferred = false;
@@ -137,7 +134,7 @@ void main() {
 		if (deferred) {
 			fcolor *= texture(lightmap, flmcoord.st); // add lightmap into... 
 			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(adjtx,0.f),fcolor.xyz)),alpas);
-			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),normal.xyz)),alpas);
+			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz)),alpas);
 			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),tangent.xyz)),alpas);
 			gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);
 		} else {

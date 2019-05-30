@@ -3,6 +3,8 @@ const int shadowMapResolution = 8192;
 
 #if defined(FSH) && defined(COMPOSITE)
 /*
+
+// Inputs 
 const int colortex0Format = RGBA32F;
 const int colortex1Format = RGBA32F;
 const int colortex2Format = RGBA32F;
@@ -19,8 +21,16 @@ const bool colortex4Clear = false;
 const bool colortex5Clear = false;
 const bool colortex6Clear = false;
 const bool colortex7Clear = false;
+
+// Depth 
 const int depthtex0Format = R32F;
 const int depthtex1Format = R32F;
+
+// Shadow
+const int shadowtex0Format = R32F;
+const int shadowtex1Format = R32F;
+const int shadowcolor0Format = RGBA32F;
+const int shadowcolor1Format = RGBA32F;
 */
 
 // reserved and used by composite and some deferred programs (but may be filled from GBuffers)
@@ -42,6 +52,12 @@ uniform sampler2D colortex7; // colortex7
 #define gbuffers1 colortex5
 #define gbuffers2 colortex6
 #define gbuffers3 colortex7
+
+// shadows
+uniform sampler2D shadowcolor0;
+uniform sampler2D shadowcolor1;
+uniform sampler2D shadowtex0;
+uniform sampler2D shadowtex1;
 
 // ...
 #endif
@@ -129,5 +145,10 @@ vec4 CameraSpaceToScreenSpace(in vec4 cameraSpace){
 
 vec4 CameraSpaceToWorldSpace(in vec4 cameraSpace){
     const vec4 worldSpaceProj = gbufferModelViewInverse*cameraSpace;
-    return worldSpaceProj/worldSpaceProj.w + vec4(cameraPosition,0.f);
+    return worldSpaceProj/worldSpaceProj.w+vec4(cameraPosition,0.f);
+}
+
+vec4 WorldSpaceToCameraSpace(in vec4 worldSpace){
+    const vec4 cameraSpaceProj = gbufferModelView*(worldSpace-vec4(cameraPosition,0.f));
+    return cameraSpaceProj/cameraSpaceProj.w;
 }

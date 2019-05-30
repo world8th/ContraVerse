@@ -22,27 +22,26 @@ for (int r = 0; r < 1; r++) {
     for (int i = 0; i < 3; i++) {
         fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
         
-
         // 
         isSemiTransparent = semiTransparent;
 
         // get world space vertex
         vec4 vertex = gl_in[i].gl_Position;
-        vertex = gbufferModelViewInverse * gbufferProjectionInverse * vertex;
-        vertex.xyz += cameraPosition;
-        
+
         // integrity normal 
         fnormal *= gbufferModelViewInverse, ftangent *= gbufferModelViewInverse;
 
-        // project into screen
+        // project into world space 
+        vertex = gbufferModelViewInverse * gbufferProjectionInverse * vertex;
+        vertex.xyz /= vertex.w;
+        vertex.xyz += cameraPosition;
+
+        // project into screen space 
         vertex.xyz -= cameraPosition;
-
-        // 
         vertex = gbufferProjection * gbufferModelView * vertex;
-
+        vertex.xyz /= vertex.w;
 
         // resolution correction
-        vertex.xyz /= vertex.w;
         vertex.xy = fma(vertex.xy, 0.5f.xx, 0.5f.xx);
 
         // assign screen space coordinates

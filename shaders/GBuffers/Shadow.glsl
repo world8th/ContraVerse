@@ -31,7 +31,7 @@ attribute vec3 mc_Entity;
 attribute vec2 mc_midTexCoord;
 vec4 correctNormal() {
     vec4 normal = vec4(gl_NormalMatrix*gl_Normal,0.f);
-    return normal*gbufferModelView;
+    return normal*shadowModelView;
 }
 #endif
 
@@ -56,9 +56,9 @@ void main() {
 #ifdef VSH
 
     // 
-	vec2 texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
-	vec2 midcoord = (gl_TextureMatrix[0] * vec4(mc_midTexCoord,0.0f,1.f)).st;
-	vec2 texcoordminusmid = texcoord-midcoord;
+	const vec2 texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
+	const vec2 midcoord = (gl_TextureMatrix[0] * vec4(mc_midTexCoord,0.0f,1.f)).st;
+	const vec2 texcoordminusmid = texcoord-midcoord;
 
     // 
 	vtexcoordam.pq  = abs(texcoordminusmid)*2;
@@ -71,12 +71,12 @@ void main() {
 	vcolor = gl_Color;
 
 	// 
-	vec4 worldSpace = gbufferModelViewInverse * gbufferProjectionInverse * gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
-	vec4 viewSpace = gbufferModelView * worldSpace; viewSpace.xyz /= viewSpace.w;
+    vec4 scrnSpace = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+	vec4 viewSpace = shadowProjectionInverse * scrnSpace; viewSpace.xyz /= viewSpace.w;
 
 	// 
 	vnormal = correctNormal(), vtangent = vec4(at_tangent.xyz, 0.f);
-	gl_Position = gl_ProjectionMatrix * gbufferModelView * (worldSpace + vec4(cameraPosition,0.f));
+	gl_Position = scrnSpace;
 	gl_FogFragCoord = length(viewSpace.xyz);
 
 #endif
@@ -93,32 +93,29 @@ void main() {
 
         // get world space vertex
         vec4 vertex = gl_in[i].gl_Position;
-        vertex = gbufferModelViewInverse * gbufferProjectionInverse * vertex;
+        vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
         vertex.xyz /= vertex.w;
+        vertex.xyz += cameraPosition;
+
+        // set vertice 
         vertices[i] = vertex.xyz;
-        //vertex.xyz += cameraPosition;
+        
+        // reproject into shadow space 
+        vertex.xyz -= cameraPosition;
+        vertex = shadowProjection * shadowModelView * vertex;
+        vertex.xyz /= vertex.w;
 
         // 
         normal += fnormal.xyz;
 
         // integrity normal 
-        fnormal *= gbufferModelViewInverse, ftangent *= gbufferModelViewInverse;
-
-        // project into screen
-        //vertex.xyz -= cameraPosition;
-
-        // 
-        vertex = gbufferProjection * gbufferModelView * vertex;
-        vertex.xyz /= vertex.w;
+        fnormal *= shadowModelViewInverse, ftangent *= shadowModelViewInverse;
 
         // resolution correction
         vertex.xy = fma(vertex.xy, 0.5f.xx, 0.5f.xx);
 
-        // assign screen space coordinates
-        //fscreencoord = vertex;
-
-        // TODO: shadow-space render-side
-        vertex.x = fma(vertex.x, SHADOW_SIZE_RATE, SHADOW_SHIFT);
+        // shadow-space render-side
+        vertex.x = fma(vertex.x, SHADOW_SIZE/float(shadowMapResolution), SHADOW_SHIFT);
 
         // re-correct screen space coordination for rendering
         vertex.xy = fma(vertex.xy, 2.f.xx, -1.f.xx);
@@ -136,10 +133,13 @@ void main() {
 
     // Pre-Calculate into Voxel-Space 
     vec3 centerOfTriangle = CenterOfTriangle(vertices);
-    vec3 normalOfTriangle = NormalOfTriangle(vertices);
+    vec3 normalOfTriangle = normal;//NormalOfTriangle(vertices);
     vec3 offsetOfVoxel = CalcVoxelOfBlock(centerOfTriangle,normalOfTriangle);
-    if (FilterForVoxel(offsetOfVoxel,normalOfTriangle)) validVoxel = true;
-    vec3 tileSpaceBlock = VoxelToTileSpace(offsetOfVoxel);
+    vec3 tileOfBlock = TileOfVoxel(offsetOfVoxel);
+    vec3 tileOfCamera = TileOfVoxel(cameraPosition);
+    
+    // 
+    if (FilterForVoxel(tileOfBlock-tileOfCamera,normalOfTriangle)) validVoxel = true;
 
     // 
     if (validVoxel) {
@@ -148,16 +148,20 @@ void main() {
 
             // get world space vertex
             vec4 vertex = gl_in[i].gl_Position;
-            vertex = gbufferModelViewInverse * gbufferProjectionInverse * vertex;
+            vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
             vertex.xyz /= vertex.w;
+            vertex.xyz += cameraPosition; // shift into world space
+
+            // get relative vertex offset (for render)
+            //vertex.xyz += tileOfBlock-offsetOfVoxel;
 
             // convert into voxel and texture space (simple way)
-            vertex.xyz -= offsetOfVoxel; // get coordinate relate of voxel 
-            vertex.xyz += tileSpaceBlock; // get voxel coordinate relate of tile-space
-            vertex.xyz = VoxelToTextureSpace(vertex.xyz).xyz; // get voxel re-coordination into texture space
+            vertex.xyz -= tileOfCamera;
+            vertex.xyz = VoxelToTextureSpace(vertex.xyz).xyz;
+            
 
             // integrity normal 
-            fnormal *= gbufferModelViewInverse, ftangent *= gbufferModelViewInverse;
+            fnormal *= shadowModelViewInverse, ftangent *= shadowModelViewInverse;
 
             // re-correct screen space coordination for rendering
             vertex.xy = fma(vertex.xy, 2.f.xx, -1.f.xx);
@@ -174,11 +178,11 @@ void main() {
 #ifdef FSH
 
 	vec2 fcoord = gl_FragCoord.xy/vec2(shadowMapResolution); // TODO: better shadow resolution
-    fcoord.x = fma(fcoord.x, 1.f/(isVoxel == 1 ? aeraSize.x : SHADOW_SIZE), -(isVoxel == 0 ? SHADOW_SHIFT : 0.f));
+    fcoord.x = fma(fcoord.x, (isVoxel == 1 ? aeraSize.x : SHADOW_SIZE.x)/float(shadowMapResolution), -(isVoxel == 0 ? SHADOW_SHIFT.x : 0.f));
 
 	vec4 vpos = vec4(fcoord.xy,gl_FragCoord.z,1.f);
 	vpos.xy   = fma(vpos.xy,2.f.xx,-1.f.xx);
-	vpos = gbufferProjectionInverse * vpos;
+	vpos = shadowProjectionInverse * vpos;
 	vpos.xyz /= vpos.w;
 
 	const vec2 adjtx = ftexcoord.xy*ftexcoordam.zw+ftexcoordam.xy;

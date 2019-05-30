@@ -4,24 +4,25 @@ const vec3 tileSize = vec3(16.f,1.f,16.f), aeraSize = vec3(128.f,64.f,128.f);
 #define SHADOW_SHIFT (aeraSize.x/float(shadowMapResolution))
 #define SHADOW_SIZE_RATE (SHADOW_SIZE/float(shadowMapResolution))
 
-// tilify voxels
-vec3 VoxelToTileSpace(in vec3 voxelPosition){
-    vec3 relativePosition = voxelPosition - cameraPosition; //fract(cameraPosition)
-    vec3 currentVoxel = round(relativePosition);
-    vec3 currentTile = floor(currentVoxel / tileSize);
-    vec3 currentTileOffset = currentTile * tileSize;
-    vec3 currentBlockInTile = mod(currentVoxel - currentTileOffset, tileSize);
-    return currentTileOffset + currentBlockInTile;
+vec3 TileOfVoxel(in vec3 currentVoxel){
+    return floor(currentVoxel / tileSize) * tileSize;
 }
 
 // convert voxel into rendering space (fetching space)
 vec3 VoxelToTextureSpace(in vec3 tileSpace){
-    //vec3 tileSpace = VoxelToTileSpace(voxelPosition);
-    vec2 flatSpace = vec2(tileSpace.x,tileSpace.y*aeraSize.z+tileSpace.z);
-    vec2 textSpaceSize = vec2(aeraSize.x,aeraSize.z*aeraSize.y);
+#ifdef COMPOSITE
+    tileSpace -= TileOfVoxel(cameraPosition); // gather in correct tile
+#endif
 
     // shift into unsigned space 
-    flatSpace += textSpaceSize*0.5f;
+    tileSpace += aeraSize*0.5f;
+
+    // flatify voxel coordinates
+    vec2 flatSpace = vec2(tileSpace.x,tileSpace.y*aeraSize.z+tileSpace.z);
+    vec2 textSpaceSize = vec2(aeraSize.x,aeraSize.y*aeraSize.z);
+
+    // shift into unsigned space 
+    //flatSpace += textSpaceSize*0.5f;
 
     // convert into unit coordinate system
     //flatSpace /= textSpaceSize;
@@ -34,20 +35,19 @@ vec3 VoxelToTextureSpace(in vec3 tileSpace){
 }
 
 // get valid surface... 
-// TODO: support for cropping/bounds check
 bool FilterForVoxel(in vec3 voxelPosition, in vec3 normalOfBlock){
-    return abs(dot(normalOfBlock,vec3(0.f,1.f,0.f))) > 0.9999f;
+    return abs(dot(normalOfBlock,vec3(0.f,1.f,0.f))) > 0.9999f && all(greaterThanEqual(voxelPosition,-aeraSize*0.5f)) && all(lessThan(voxelPosition,aeraSize*0.5f));
 }
 
 // needs for make and add offset of voxel 
 vec3 CenterOfTriangle(in mat3 vertices){
-    return (vertices[0]+vertices[1]+vertices[2])*0.3333333f;
+    //return (vertices[0]+vertices[1]+vertices[2])*0.3333333f;
+    return min(vertices[0],min(vertices[1],vertices[2]));
 }
 
 // calculate voxel offset by block triangle center 
 vec3 CalcVoxelOfBlock(in vec3 centerOfBlockTriangle, in vec3 surfaceNormal){
-    centerOfBlockTriangle -= surfaceNormal*0.0001f; // correctify
-    return floor(centerOfBlockTriangle);
+    return round(centerOfBlockTriangle-surfaceNormal*0.0001f); // correctify
 }
 
 // calculate surface normal of blocks
