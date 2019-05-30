@@ -53,26 +53,29 @@ uniform sampler2D lightmap;
 void main() {
 #ifdef VSH
 
+	// 
 	vec2 texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
 	vec2 midcoord = (gl_TextureMatrix[0] * vec4(mc_midTexCoord,0.0f,1.f)).st;
 	vec2 texcoordminusmid = texcoord-midcoord;
+
+	// 
 	vtexcoordam.pq  = abs(texcoordminusmid)*2;
 	vtexcoordam.st  = min(texcoord,midcoord-texcoordminusmid);
 	vtexcoord.st    = fma(sign(texcoordminusmid),0.5.xx,0.5.xx);
 
+	//
+	vparametric = ivec4(mc_Entity.xy,0.f.xx);
 	vlmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
 	vcolor = gl_Color;
 
-	vec4 worldSpace = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
-	vec4 viewSpace = gbufferModelView * worldSpace;
-	worldSpace.xyz += cameraPosition; // correction into world space 
-
-	vparametric = ivec4(mc_Entity.xy,0.f.xx);
+	// 
+	vec4 worldSpace = gbufferModelViewInverse * gbufferProjectionInverse * gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+	vec4 viewSpace = gbufferModelView * worldSpace; viewSpace.xyz /= viewSpace.w;
 
 	// 
 	vnormal = correctNormal(), vtangent = vec4(at_tangent.xyz, 0.f);
-	gl_Position = gl_ProjectionMatrix * gbufferModelView * (worldSpace - vec4(cameraPosition,0.f));
-	gl_FogFragCoord = length(viewSpace.xyz);
+	gl_Position = gbufferProjection * gbufferModelView * worldSpace;
+	gl_FogFragCoord = length((gbufferModelView * worldSpace).xyz);
 
 #endif
 

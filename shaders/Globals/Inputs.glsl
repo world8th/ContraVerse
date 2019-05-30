@@ -21,6 +21,9 @@ const int depthtex0Format = R32F;
 const int depthtex1Format = R32F;
 */
 
+const int shadowMapResolution = 8192;
+
+
 // reserved and used by composite and some deferred programs (but may be filled from GBuffers)
 uniform sampler2D colortex0;
 uniform sampler2D colortex1;
@@ -83,10 +86,13 @@ uniform sampler2D gaux4; // colortex7
 
 
 // uniform 
-uniform mat4 gbufferModelView;
-uniform mat4 gbufferModelViewInverse;
 uniform mat4 shadowModelView;
 uniform mat4 shadowModelViewInverse;
+uniform mat4 shadowProjection;
+uniform mat4 shadowProjectionInverse;
+
+uniform mat4 gbufferModelView;
+uniform mat4 gbufferModelViewInverse;
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferPreviousModelView;
@@ -124,5 +130,5 @@ vec4 CameraSpaceToScreenSpace(in vec4 cameraSpace){
 
 vec4 CameraSpaceToWorldSpace(in vec4 cameraSpace){
     const vec4 worldSpaceProj = gbufferModelViewInverse*cameraSpace;
-    return worldSpaceProj/worldSpaceProj.w;
+    return worldSpaceProj/worldSpaceProj.w + vec4(cameraPosition,0.f);
 }
