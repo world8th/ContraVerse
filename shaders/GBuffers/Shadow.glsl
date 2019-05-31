@@ -102,6 +102,7 @@ void main() {
         
         // reproject into shadow space 
         vertex.xyz -= cameraPosition;
+        vertex.xyz *= vertex.w;
         vertex = shadowProjection * shadowModelView * vertex;
         vertex.xyz /= vertex.w;
 
@@ -115,7 +116,8 @@ void main() {
         vertex.xy = fma(vertex.xy, 0.5f.xx, 0.5f.xx);
 
         // shadow-space render-side
-        vertex.x = fma(vertex.x, SHADOW_SIZE/float(shadowMapResolution), SHADOW_SHIFT);
+        vertex.x *= (float(shadowMapResolution)-aeraSize.x)/float(shadowMapResolution);
+        vertex.x += aeraSize.x/float(shadowMapResolution); // TODO: better shadow resolution support 
 
         // re-correct screen space coordination for rendering
         vertex.xy = fma(vertex.xy, 2.f.xx, -1.f.xx);
@@ -157,8 +159,9 @@ void main() {
 
             // convert into voxel and texture space (simple way)
             vertex.xyz -= normalOfTriangle*0.0001f;
-            vertex.xz += round(vertex.xz-tileOfBlock.xz);
+            vertex.xz += floor(vertex.xz-tileOfBlock.xz + 0.0001f);
 
+            // convert into rendering space 
             vertex.xyz -= tileOfCamera;
             vertex.xyz = VoxelToTextureSpace(vertex.xyz).xyz;
             
@@ -180,8 +183,12 @@ void main() {
 
 #ifdef FSH
 
-	vec2 fcoord = gl_FragCoord.xy/vec2(shadowMapResolution); // TODO: better shadow resolution
-    fcoord.x = fma(fcoord.x, (isVoxel == 1 ? aeraSize.x : SHADOW_SIZE.x)/float(shadowMapResolution), -(isVoxel == 0 ? SHADOW_SHIFT.x : 0.f));
+	vec2 fcoord = gl_FragCoord.xy/vec2(1.f,float(shadowMapResolution)); // TODO: better shadow resolution
+    if (isVoxel == 1) {
+        fcoord.x = (fcoord.x - 0.f) / aeraSize.x;
+    } else {
+        fcoord.x = (fcoord.x - aeraSize.x) / SHADOW_SIZE.x;
+    }
 
 	vec4 vpos = vec4(fcoord.xy,gl_FragCoord.z,1.f);
 	vpos.xy   = fma(vpos.xy,2.f.xx,-1.f.xx);

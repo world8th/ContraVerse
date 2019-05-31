@@ -85,8 +85,13 @@ void main() {
 
 #ifdef FSH
 
-	vec2 fcoord = gl_FragCoord.xy/vec2(viewWidth,viewHeight);
-    fcoord.x = fma(fcoord.x, 2.f, -float(isSemiTransparent));
+	vec2 fcoord = gl_FragCoord.xy/vec2(1.f,viewHeight);///vec2(viewWidth,viewHeight);
+	if (isSemiTransparent == 1) {
+		fcoord.x = (fcoord.x-(viewWidth.x*0.5f))/(viewWidth.x*0.5f);
+	} else {
+		fcoord.x = fcoord.x/(viewWidth.x*0.5f);
+	}
+
 
 	vec4 vpos = vec4(fcoord.xy,gl_FragCoord.z,1.f);
 	vpos.xy   = fma(vpos.xy,2.f.xx,-1.f.xx);

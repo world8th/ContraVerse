@@ -5,7 +5,7 @@ const vec3 tileSize = vec3(16.f,1.f,16.f), aeraSize = vec3(128.f,64.f,128.f);
 #define SHADOW_SIZE_RATE (SHADOW_SIZE/float(shadowMapResolution))
 
 vec3 TileOfVoxel(in vec3 currentVoxel){
-    return floor(round(currentVoxel) / tileSize) * tileSize;
+    return floor(floor(currentVoxel + 0.0001f) / tileSize) * tileSize;
 }
 
 // convert voxel into rendering space (fetching space)
@@ -18,7 +18,7 @@ vec3 VoxelToTextureSpace(in vec3 tileSpace){
     tileSpace += aeraSize*0.5f;
 
     // flatify voxel coordinates
-    vec2 flatSpace = vec2(tileSpace.x,floor(tileSpace.y)*aeraSize.z+tileSpace.z);
+    vec2 flatSpace = vec2(floor(tileSpace.x + 0.0001f),floor(tileSpace.y)*aeraSize.z+floor(tileSpace.z + 0.0001f));
     vec2 textSpaceSize = vec2(aeraSize.x,aeraSize.y*aeraSize.z);
 
     // shift into unsigned space 
@@ -42,7 +42,7 @@ bool FilterForVoxel(in vec3 voxelPosition, in vec3 normalOfBlock){
 // needs for make and add offset of voxel 
 vec3 CenterOfTriangle(in mat3 vertices){
     //return (vertices[0]+vertices[1]+vertices[2])*0.3333333f;
-    return round(min(vertices[0],min(vertices[1],vertices[2]))) + 0.0001f;
+    return floor(min(vertices[0],min(vertices[1],vertices[2])) + 0.0001f);
 }
 
 // calculate voxel offset by block triangle center 
