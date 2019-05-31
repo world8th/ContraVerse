@@ -18,7 +18,7 @@ vec3 VoxelToTextureSpace(in vec3 tileSpace){
     tileSpace += aeraSize*0.5f;
 
     // flatify voxel coordinates
-    vec2 flatSpace = vec2(tileSpace.x,tileSpace.y*aeraSize.z+tileSpace.z);
+    vec2 flatSpace = vec2(tileSpace.x,floor(tileSpace.y)*aeraSize.z+tileSpace.z);
     vec2 textSpaceSize = vec2(aeraSize.x,aeraSize.y*aeraSize.z);
 
     // shift into unsigned space 
@@ -31,7 +31,7 @@ vec3 VoxelToTextureSpace(in vec3 tileSpace){
     flatSpace /= float(shadowMapResolution);
 
     // return pixel corrected
-    return vec3(flatSpace,(tileSpace.y+aeraSize.y*0.5f)/aeraSize.y);
+    return vec3(flatSpace,(floor(tileSpace.y)+aeraSize.y*0.5f)/aeraSize.y);
 }
 
 // get valid surface... 
