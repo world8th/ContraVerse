@@ -42,12 +42,12 @@ bool FilterForVoxel(in vec3 voxelPosition, in vec3 normalOfBlock){
 // needs for make and add offset of voxel 
 vec3 CenterOfTriangle(in mat3 vertices){
     //return (vertices[0]+vertices[1]+vertices[2])*0.3333333f;
-    return min(vertices[0],min(vertices[1],vertices[2]));
+    return round(min(vertices[0],min(vertices[1],vertices[2]))) + 0.0001f;
 }
 
 // calculate voxel offset by block triangle center 
 vec3 CalcVoxelOfBlock(in vec3 centerOfBlockTriangle, in vec3 surfaceNormal){
-    return round(centerOfBlockTriangle-surfaceNormal*0.0001f); // correctify
+    return floor(centerOfBlockTriangle-surfaceNormal*0.0001f); // correctify
 }
 
 // calculate surface normal of blocks

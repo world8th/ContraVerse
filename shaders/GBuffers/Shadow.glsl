@@ -156,6 +156,9 @@ void main() {
             //vertex.xyz += tileOfBlock-offsetOfVoxel;
 
             // convert into voxel and texture space (simple way)
+            vertex.y = floor(vertex.y-normalOfTriangle.y*0.0001f);
+            vertex.xz += round(vertex.xz-tileOfBlock.xz);
+
             vertex.xyz -= tileOfCamera;
             vertex.xyz = VoxelToTextureSpace(vertex.xyz).xyz;
             

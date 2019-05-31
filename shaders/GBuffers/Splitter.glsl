@@ -38,6 +38,7 @@ for (int r = 0; r < 1; r++) {
 
         // project into screen space 
         vertex.xyz -= cameraPosition;
+        vertex.xyz *= vertex.w;
         vertex = gbufferProjection * gbufferModelView * vertex;
         vertex.xyz /= vertex.w;
 
@@ -55,6 +56,7 @@ for (int r = 0; r < 1; r++) {
 
         // finally emit vertex
         vertex.xyz *= vertex.w;
+        //vertex.w = 1.f;
         gl_Position = vertex;
         EmitVertex();
     }
