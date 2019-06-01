@@ -26,9 +26,9 @@ flat vin ivec4 vparametric gap;
 #endif
 
 #ifdef VSH
-in vec4 at_tangent;
-in vec4 mc_Entity;
-in vec4 mc_midTexCoord;
+attribute vec4 at_tangent;
+attribute vec3 mc_Entity;
+attribute vec2 mc_midTexCoord;
 vec4 correctNormal() {
     vec4 normal = vec4(gl_NormalMatrix*gl_Normal,0.f);
     return normal*gbufferModelView;
@@ -53,18 +53,28 @@ uniform sampler2D lightmap;
 void main() {
 #ifdef VSH
 
-	vtexcoordam = 0.f.xxxx;
-	vtexcoord = gl_TextureMatrix[0] * gl_MultiTexCoord0;
+	// 
+	const vec2 texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
+	const vec2 midcoord = (gl_TextureMatrix[0] * vec4(mc_midTexCoord.xy,0.0f,1.f)).st;
+	const vec2 texcoordminusmid = texcoord-midcoord;
+
+	// 
+	vtexcoordam.pq  = abs(texcoordminusmid)*2;
+	vtexcoordam.st  = min(texcoord,midcoord-texcoordminusmid);
+	vtexcoord.st    = fma(sign(texcoordminusmid),0.5.xx,0.5.xx);
+
+	//
+	vparametric = ivec4(mc_Entity.xy,0.f.xx);
 	vlmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
 	vcolor = gl_Color;
 
-	vec4 worldSpace = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
-	vec4 viewSpace = gbufferModelView * worldSpace;
-	worldSpace.xyz += cameraPosition; // correction into world space 
+	// 
+	vec4 scrnSpace = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+	vec4 viewSpace = gbufferProjectionInverse * scrnSpace; viewSpace.xyz /= viewSpace.w;
 
 	// 
 	vnormal = correctNormal(), vtangent = vec4(at_tangent.xyz, 0.f);
-	gl_Position = gl_ProjectionMatrix * gbufferModelView * (worldSpace - vec4(cameraPosition,0.f));
+	gl_Position = scrnSpace;
 	gl_FogFragCoord = length(viewSpace.xyz);
 
 #endif
@@ -115,9 +125,9 @@ void main() {
     float alpha = color.w, alpas = random(vpos.xyz)<alpha ? 1.f : 0.f; 
 	if ( all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx)) ) {
 		gl_FragDepth = gl_FragCoord.z + 1.f;
-        gl_FragData[0] = vec4(pack3x2(mat2x3(color.xyz,color.xyz)),alpas);
+        gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),color.xyz)),alpas);
 		gl_FragData[1] = vec4(0.f,0.f.xx,1.f);
-		gl_FragData[2] = vec4(fnormal.xyz,1.f);
+		gl_FragData[2] = vec4(0.f.xxx,1.f);
 	}
 
 #endif

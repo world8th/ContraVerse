@@ -45,6 +45,8 @@ layout(triangle_strip, max_vertices = 3) out;
 #ifdef FSH
 uniform sampler2D tex;
 uniform sampler2D lightmap;
+uniform ivec2 atlasSize;
+#define TEXTURE_SIZE 16 
 /* DRAWBUFFERS:4567 */
 #endif
 
@@ -138,13 +140,14 @@ void main() {
 #endif
 		if (deferred) {
 			fcolor *= texture(lightmap, flmcoord.st); // add lightmap into... 
-			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(adjtx,0.f),fcolor.xyz)),alpas);
-			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz)),alpas);
-			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),tangent.xyz)),alpas);
+			const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
+			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz)),alpas);
+			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);
+			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(torig.xy,0.f),tangent.xyz*0.5f+0.5f)),alpas);
 			gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);
 		} else {
 			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),color.xyz)),alpas);
-			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz)),alpas);
+			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);
 			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);
 			gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);
 		}

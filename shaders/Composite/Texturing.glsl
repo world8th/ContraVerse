@@ -32,7 +32,9 @@ void main(){
 
         // special edition
         if (mode == COORDINATED) {
-            vec2 texcoord = colp[0].xy;
+            const vec2 tsize = textureSize(colortex3,0);
+            const vec2 atlas = tsize/TEXTURE_SIZE, atlasInv = TEXTURE_SIZE/tsize;
+            const vec2 texcoord = fma(fract(colp[0].xy),atlasInv,round(texp[0].xy)*atlasInv);
 
             //texcoord *= TEXTURE_SIZE;
             //vec2 textile = floor(texcoord);

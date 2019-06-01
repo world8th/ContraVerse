@@ -222,9 +222,9 @@ void main() {
 
 		if (isVoxel == 1) {
             // voxel can store only 8-bit color... 
-            const vec2 tile = vec2(atlasSize.xy)/TEXTURE_SIZE.xx, ftex = adjtx.xy*tile, ftxt = floor(ftex);
+            const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
             const float vxcolr = uintBitsToFloat(packUnorm4x8(vec4(fcolor.xyz*texture(lightmap,flmcoord.st).xyz,0.f))); // TODO: better pre-baked emission support
-            const float vxmisc = uintBitsToFloat(packUnorm4x8(vec4(0.f.xx,ftxt/tile))); // first 16-bit uint's BROKEN
+            const float vxmisc = uintBitsToFloat(packUnorm4x8(vec4(0.f.xx,torig/atlas))); // first 16-bit uint's BROKEN
             const float vxdata = uintBitsToFloat(packUnorm2x16(fparametric.xy/65535.f)); // cheaper packing (for code)
 			gl_FragData[0] = vec4(vxcolr,vxmisc,vxdata,1.f); // try to pack into one voxel 
 		} else {

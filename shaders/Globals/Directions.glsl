@@ -3,6 +3,7 @@
 #define gin out 
 #define vin out 
 #define gap  
+#define attribute in 
 #endif
 #ifdef GSH
 #define gin out 
