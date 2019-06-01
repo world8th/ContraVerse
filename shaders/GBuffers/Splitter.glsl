@@ -19,6 +19,7 @@ for (int r = 0; r < 1; r++) {
 #endif
 
     // 
+    const vec4 cameraPosition = gbufferModelViewInverse * vec4(0.f.xxx,1.f);
     for (int i = 0; i < 3; i++) {
         fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
         
@@ -33,11 +34,14 @@ for (int r = 0; r < 1; r++) {
 
         // project into world space 
         vertex = gbufferModelViewInverse * gbufferProjectionInverse * vertex;
+
         vertex.xyz /= vertex.w;
-        vertex.xyz += cameraPosition;
+        vertex.xyz += cameraPosition.xyz;
+
+        //vertex.xyz = floor(vertex.xyz);
 
         // project into screen space 
-        vertex.xyz -= cameraPosition;
+        vertex.xyz -= cameraPosition.xyz;
         vertex.xyz *= vertex.w;
         vertex = gbufferProjection * gbufferModelView * vertex;
         vertex.xyz /= vertex.w;

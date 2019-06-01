@@ -39,13 +39,12 @@ void main() {
 	vlmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
 	vcolor = gl_Color;
 
-	vec4 worldSpace = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
-	vec4 viewSpace = gbufferModelView * worldSpace;
-	worldSpace.xyz += cameraPosition; // correction into world space 
+	vec4 scrnSpace = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+	vec4 viewSpace = gbufferModelViewInverse * scrnSpace; viewSpace /= viewSpace.w;
 
 	// 
 	vnormal = correctNormal(), vtangent = vec4(at_tangent.xyz, 0.f);
-	gl_Position = gl_ProjectionMatrix * gbufferModelView * (worldSpace - vec4(cameraPosition,0.f));
+	gl_Position = scrnSpace;
 	gl_Position.xyz /= gl_Position.w;
 	gl_Position.x = gl_Position.x * 0.5f + 0.5f;
 	gl_Position.xyz *= gl_Position.w;

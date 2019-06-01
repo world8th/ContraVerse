@@ -46,7 +46,9 @@ layout(triangle_strip, max_vertices = 3) out;
 uniform sampler2D tex;
 uniform sampler2D lightmap;
 uniform ivec2 atlasSize;
-#define TEXTURE_SIZE 16 
+#ifndef TEXTURE_SIZE
+#define TEXTURE_SIZE 16
+#endif
 /* DRAWBUFFERS:4567 */
 #endif
 

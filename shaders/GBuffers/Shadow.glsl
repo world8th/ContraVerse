@@ -35,7 +35,9 @@ vec4 correctNormal() {
 }
 #endif
 
-#define TEXTURE_SIZE 16 
+#ifndef TEXTURE_SIZE
+#define TEXTURE_SIZE 16
+#endif
 
 // GSO input
 #ifdef GSH
@@ -86,6 +88,7 @@ void main() {
     isVoxel = 0;
 
     // 
+    const vec4 cameraPosition = vec4(cameraPosition,1.f);//gbufferModelViewInverse * vec4(0.f.xxx,1.f);
     mat3 vertices = mat3(0.f.xxx,0.f.xxx,0.f.xxx);
     vec3 normal = 0.f.xxx;
     for (int i = 0; i < 3; i++) {
@@ -95,13 +98,13 @@ void main() {
         vec4 vertex = gl_in[i].gl_Position;
         vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
         vertex.xyz /= vertex.w;
-        vertex.xyz += cameraPosition;
+        vertex.xyz += cameraPosition.xyz;
 
         // set vertice 
         vertices[i] = vertex.xyz;
         
         // reproject into shadow space 
-        vertex.xyz -= cameraPosition;
+        vertex.xyz -= cameraPosition.xyz;
         vertex.xyz *= vertex.w;
         vertex = shadowProjection * shadowModelView * vertex;
         vertex.xyz /= vertex.w;
@@ -138,7 +141,7 @@ void main() {
     vec3 normalOfTriangle = normal;//NormalOfTriangle(vertices);
     vec3 offsetOfVoxel = CalcVoxelOfBlock(centerOfTriangle,normalOfTriangle);
     vec3 tileOfBlock = TileOfVoxel(offsetOfVoxel);
-    vec3 tileOfCamera = TileOfVoxel(cameraPosition);
+    vec3 tileOfCamera = TileOfVoxel(cameraPosition.xyz);
     
     // 
     if (FilterForVoxel(tileOfBlock-tileOfCamera,normalOfTriangle)) validVoxel = true;
@@ -152,7 +155,10 @@ void main() {
             vec4 vertex = gl_in[i].gl_Position;
             vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
             vertex.xyz /= vertex.w;
-            vertex.xyz += cameraPosition; // shift into world space
+            vertex.xyz += cameraPosition.xyz; // shift into world space
+
+            // normalize vertex 
+            vertex.xyz = floor(vertex.xyz + 0.0001f);
 
             // get relative vertex offset (for render)
             //vertex.xyz += tileOfBlock-offsetOfVoxel;
@@ -162,6 +168,7 @@ void main() {
             vertex.xz += floor(vertex.xz-tileOfBlock.xz + 0.0001f);
 
             // convert into rendering space 
+            //vertex.xyz += aeraSize*0.5f;
             vertex.xyz -= tileOfCamera;
             vertex.xyz = VoxelToTextureSpace(vertex.xyz).xyz;
             
@@ -222,11 +229,12 @@ void main() {
 
 		if (isVoxel == 1) {
             // voxel can store only 8-bit color... 
-            const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
-            const float vxcolr = uintBitsToFloat(packUnorm4x8(vec4(fcolor.xyz*texture(lightmap,flmcoord.st).xyz,0.f))); // TODO: better pre-baked emission support
-            const float vxmisc = uintBitsToFloat(packUnorm4x8(vec4(0.f.xx,torig/atlas))); // first 16-bit uint's BROKEN
-            const float vxdata = uintBitsToFloat(packUnorm2x16(fparametric.xy/65535.f)); // cheaper packing (for code)
-			gl_FragData[0] = vec4(vxcolr,vxmisc,vxdata,1.f); // try to pack into one voxel 
+            //const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
+            //const float vxcolr = uintBitsToFloat(packUnorm4x8(vec4(fcolor.xyz*texture(lightmap,flmcoord.st).xyz,1.f))); // TODO: better pre-baked emission support
+            //const float vxmisc = uintBitsToFloat(packUnorm4x8(vec4(0.f.xx,torig/atlas))); // first 16-bit uint's BROKEN
+            //const float vxdata = uintBitsToFloat(packUnorm2x16(fparametric.xy/65535.f)); // cheaper packing (for code)
+			//gl_FragData[0] = vec4(vxcolr,vxmisc,vxdata,1.f); // try to pack into one voxel
+            gl_FragData[0] = vec4(color.xyz,1.f);
 		} else {
 			gl_FragData[0] = vec4(color); // packing is useless 
 		}

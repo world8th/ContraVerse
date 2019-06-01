@@ -21,6 +21,8 @@ const bool colortex4Clear = false;
 const bool colortex5Clear = false;
 const bool colortex6Clear = false;
 const bool colortex7Clear = false;
+const bool shadowcolor0Clear = false;
+const bool shadowcolor1Clear = false;
 
 // Depth 
 const int depthtex0Format = R32F;
@@ -143,12 +145,14 @@ vec4 CameraSpaceToScreenSpace(in vec4 cameraSpace){
     return screenSpaceProj/screenSpaceProj.w;
 }
 
+const vec3 centerView = 0.f.xxx;
+
 vec4 CameraSpaceToWorldSpace(in vec4 cameraSpace){
     const vec4 worldSpaceProj = gbufferModelViewInverse*cameraSpace;
-    return worldSpaceProj/worldSpaceProj.w+vec4(cameraPosition,0.f);
+    return worldSpaceProj/worldSpaceProj.w+vec4(cameraPosition.xyz-vec3(0.f,0.f,0.f),0.f);
 }
 
 vec4 WorldSpaceToCameraSpace(in vec4 worldSpace){
-    const vec4 cameraSpaceProj = gbufferModelView*(worldSpace-vec4(cameraPosition,0.f));
+    const vec4 cameraSpaceProj = gbufferModelView*(worldSpace-vec4(cameraPosition.xyz-vec3(0.f,0.f,0.f),0.f));
     return cameraSpaceProj/cameraSpaceProj.w;
 }

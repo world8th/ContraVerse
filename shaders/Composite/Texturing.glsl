@@ -12,7 +12,9 @@ uniform ivec2 atlasSize;
 const int PRETEXTURED = 0, COORDINATED = 1;
 
 // TODO: add to definition settings officially 
-#define TEXTURE_SIZE 16 
+#ifndef TEXTURE_SIZE
+#define TEXTURE_SIZE 16
+#endif
 
 void main(){
     #ifdef VSH
