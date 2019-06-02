@@ -132,7 +132,7 @@ Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
 
     if (tbox.y >= tbox.x && tbox.y >= 0.f) {
         const ivec3 bndr = ivec3(128,64,128)/2;
-        const vec3 fbndr = 128.f.xxx;//aeraSize*0.5f;
+        const vec3 fbndr = aeraSize*0.5f;
 
         const vec3 rayStrt = exactStartPos + rayDir*max(tbox.x+0.0001f,0.f), rayEnd = exactStartPos + rayDir*max(tbox.y-0.0001f,0.f), rayDir = rayEnd-rayStrt;
         ivec3 current = ivec3(floor(rayStrt/fbndr)), last = ivec3(floor(rayEnd/fbndr));

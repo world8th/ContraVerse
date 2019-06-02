@@ -22,13 +22,11 @@ void main(){
         mat2x3 colp = unpack3x2(texture(gbuffers0,fcoord.xy).xyz);
         vec3 fcolor = colp[1], fdiffc = 0.f.xxx;
 
-        const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,1.f)),2.0f.xx,-1.f.xx),texture(depthtex0,fcoord).x,1.f);
-        vec4 wPositionView = CameraSpaceToWorldSpace(vec4(0.f.xxx,1.f));
-        vec4 wSunPosition = CameraSpaceToWorldSpace(vec4(sunPosition,1.f)) - vec4(wPositionView.xyz,0.f);
-        vec4 wPosition = CameraSpaceToWorldSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
-        vec4 wPositionRelative = wPosition-vec4(wPositionView.xyz,0.f);
 
-//TraceVoxel
+        const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord*vec2(2.f,1.f)),2.0f.xx,-1.f.xx),  0.001f , 1.f);
+        const vec4 modelPosition = CameraSpaceToModelSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
+        const vec4 modelCenter = CameraSpaceToModelSpace(CameraCenterView);
+        const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
         
         {
             //Voxel voxel = TraceVoxel(wPosition.xyz,normalize(wPositionRelative.xyz));

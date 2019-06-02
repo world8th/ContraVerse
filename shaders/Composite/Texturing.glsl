@@ -50,20 +50,19 @@ void main(){
             
         }
 
-        const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,1.f)),2.0f.xx,-1.f.xx),0.001f,1.f);
 
         // fill main buffer with sky-color
         float filled = texture(gbuffers0,fcoord.xy).w;
         if (fcoord.x < 0.5f && filled < 0.1f) {
-            const vec4 wPosition = CameraSpaceToWorldSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
-            const vec4 wView = CameraSpaceToWorldSpace(vec4(0.f.xxx,1.f));
-            const vec4 wVector = vec4(normalize(wPosition.xyz-wView.xyz),0.f);
-            const vec4 wSunPosition = CameraSpaceToWorldSpace(vec4(sunPosition,1.f));
+            const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord*vec2(2.f,1.f)),2.0f.xx,-1.f.xx),  0.001f , 1.f);
+            const vec4 modelCenter = CameraSpaceToModelSpace(CameraCenterView);
+            const vec4 modelPosition = CameraSpaceToModelSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
+            const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
 
             colp[1] = atmosphere(
-                normalize(wVector.xyz),                          // normalized ray direction
-                (wPosition.xyz-wView.xyz)+vec3(0.f,6372e3f,0.f), // planet position
-                (wSunPosition.xyz-wView.xyz),                    // position of the sun
+                modelVector.xyz,                                 // normalized ray direction
+                modelPosition.xyz+vec3(0.f,6372e3f,0.f),         // planet position
+                sunPosition.xyz,                                 // position of the sun
                 40.0f,                                           // intensity of the sun
                 6371e3f,                                         // radius of the planet in meters
                 6471e3f,                                         // radius of the atmosphere in meters
