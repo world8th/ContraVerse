@@ -34,7 +34,6 @@ void main(){
         const vec4 wPosition = CameraSpaceToWorldSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
         const vec4 wView = CameraSpaceToWorldSpace(vec4(0.f.xxx,1.f));
         const vec4 wVector = vec4(normalize(wPosition.xyz-wView.xyz),0.f);
-        const vec4 wViewShift = fract(wPosition);
 
         //Voxel voxel = TraceVoxel(floor(wPosition.xyz)-TileOfVoxel(cameraPosition.xyz)+wViewShift.xyz, wVector.xyz);
         //if (voxel.color.w > 0.f) colp[1] = vec3(voxel.color.xyz);
