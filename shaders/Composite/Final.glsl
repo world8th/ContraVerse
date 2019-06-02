@@ -28,12 +28,15 @@ void main(){
         //colp[1] = texture(shadowcolor0,vec2(fcoord)).xyz;
         //colp[1] = texture(shadowcolor0,vec2(texcoord.xy*vec2(1.f,1.f)*buffersize/shadowsize)).xyz;
 
-        const vec4 screenSpaceCorrect = vec4(fma(texcoord.xy,2.0f.xx,-1.f.xx),filled > 0.f ? texture(depthtex0,fcoord.xy).x : 1.f,1.f);
+        //const vec4 screenSpaceCorrect = vec4(fma(texcoord.xy,2.0f.xx,-1.f.xx),filled > 0.f ? texture(depthtex0,fcoord.xy).x : 1.f,1.f);
+        //const vec4 screenSpaceCorrect = vec4(fma(texcoord.xy,2.0f.xx,-1.f.xx), filled > 0.f ? 0.001f : 1.f, 1.f);
+        const vec4 screenSpaceCorrect = vec4(fma(texcoord.xy,2.0f.xx,-1.f.xx),  0.001f , 1.f);
         const vec4 wPosition = CameraSpaceToWorldSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
         const vec4 wView = CameraSpaceToWorldSpace(vec4(0.f.xxx,1.f));
         const vec4 wVector = vec4(normalize(wPosition.xyz-wView.xyz),0.f);
+        const vec4 wViewShift = fract(wPosition);
 
-        //Voxel voxel = TraceVoxel(wPosition.xyz-TileOfVoxel(cameraPosition.xyz), wVector.xyz);
+        //Voxel voxel = TraceVoxel(floor(wPosition.xyz)-TileOfVoxel(cameraPosition.xyz)+wViewShift.xyz, wVector.xyz);
         //if (voxel.color.w > 0.f) colp[1] = vec3(voxel.color.xyz);
 
 

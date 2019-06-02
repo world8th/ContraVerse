@@ -30,10 +30,12 @@ vec3 VoxelToTextureSpace(in vec3 tileSpace){
     // TODO: better shadow resolution division 
 #ifndef COMPOSITE
     flatSpace /= float(shadowMapResolution);
+#else
+    flatSpace += 0.5f;
 #endif
 
     // return pixel corrected
-    return vec3(flatSpace,(floor(tileSpace.y)+aeraSize.y*0.5f)/aeraSize.y);
+    return vec3(flatSpace,(floor(tileSpace.y + 0.0001f)+aeraSize.y*0.5f)/aeraSize.y);
 }
 
 // get valid surface... 
@@ -79,7 +81,6 @@ Voxel VoxelContents(in vec3 tileSpace){
 
     if (all(greaterThanEqual(tileSpace,-aeraSize*0.5f)) && all(lessThan(tileSpace,aeraSize*0.5f))) {
         //const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
-        tileSpace.y -= 1.0f;
         const vec2 vect = VoxelToTextureSpace(floor(tileSpace+0.0001f)).xy;
 
         const vec4 vcol = texelFetch(shadowcolor0, ivec2(vect), 0);
@@ -109,8 +110,14 @@ vec2 intersect(in vec3 ro, in vec3 dir) {
 	const vec3 tmax = (pmax - ro) * ird; // [-inf, inf]
 	const vec3 bmin = min(tmin, tmax), bmax = max(tmin, tmax);
     
-	return vec2(min(bmax.x, min(bmax.y, bmax.z)), max(bmin.x, max(bmin.y, bmin.z)));
+	return vec2(max(bmin.x, max(bmin.y, bmin.z)), min(bmax.x, min(bmax.y, bmax.z)));
 }
+
+
+bvec3 and(in bvec3 a, in bvec3 b){
+    return bvec3(a.x&&b.x,a.y&&b.y,a.z&&b.z);
+}
+
 
 Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
     
@@ -120,55 +127,37 @@ Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
     finalVoxel.tbase = 0.f.xx;
     finalVoxel.param = 0.f.xx;
 
+    //exactStartPos -= aeraSize*0.5f;
     const vec2 tbox = intersect(exactStartPos, rayDir);
-    //if (tbox.y >= tbox.x) {
+
+    if (tbox.y >= tbox.x && tbox.y >= 0.f) {
         const ivec3 bndr = ivec3(128,64,128)/2;
-        //exactStartPos += aeraSize*0.5f;
+        const vec3 fbndr = 128.f.xxx;//aeraSize*0.5f;
 
-        const vec3 cellMin = exactStartPos + rayDir*max(tbox.x-0.0001f,0.f), cellMax = exactStartPos + rayDir*max(tbox.y+0.0001f,1.f), rayInvDir = 1.f/rayDir;
-        //const vec3 cellMin = -aeraSize*0.5f, cellMax = aeraSize*0.5f, rayInvDir = 1.f/rayDir;
+        const vec3 rayStrt = exactStartPos + rayDir*max(tbox.x+0.0001f,0.f), rayEnd = exactStartPos + rayDir*max(tbox.y-0.0001f,0.f), rayDir = rayEnd-rayStrt;
+        ivec3 current = ivec3(floor(rayStrt/fbndr)), last = ivec3(floor(rayEnd/fbndr));
 
-        //exactStartPos -= TileOfVoxel(cameraPosition); // re-align world space position 
-        vec3 tmaxNeg = (cellMin - exactStartPos) * rayInvDir;
-        vec3 tmaxPos = (cellMax - exactStartPos) * rayInvDir;
+        const ivec3 stepd = mix(ivec3(-1),ivec3(1),greaterThanEqual(rayDir,0.f.xxx));
+        const vec3 nextVxl = vec3(current+stepd)*fbndr;
 
-        vec3 tmax;
-        tmax.x = (rayDir.x < 0.0) ? tmaxNeg.x : tmaxPos.x;
-        tmax.y = (rayDir.y < 0.0) ? tmaxNeg.y : tmaxPos.y;
-        tmax.z = (rayDir.z < 0.0) ? tmaxNeg.z : tmaxPos.z;
-        
-        ivec3 stepDir;
-        stepDir.x = rayDir.x < 0.0f ? -1 : 1;
-        stepDir.y = rayDir.y < 0.0f ? -1 : 1;
-        stepDir.z = rayDir.z < 0.0f ? -1 : 1;
-        vec3 tDelta = abs(rayInvDir);
-        
-        ivec3 voxelPos = ivec3(cellMin);
+        vec3 tmax = mix(10e5f.xxx,(nextVxl-rayStrt)/rayDir,notEqual(rayDir,0.f.xxx));
+        vec3 tdelta = mix(10e5f.xxx,fbndr/rayDir*stepd,notEqual(rayDir,0.f.xxx));
+        //current -= mix(ivec3(0),ivec3(-1),and(notEqual(current,last),lessThan(rayDir,0.f.xxx)));
+
         bool keepTraversing = true;
         while (keepTraversing) {
+            const float minp = min(tmax.x, min(tmax.y, tmax.z));
+            const int axis = minp == tmax.y ? 1 : (minp == tmax.z ? 2 : 0);
+            current[axis] += stepd[axis], tmax[axis] += tdelta[axis];
             
-            if (tmax.x < tmax.y || tmax.z < tmax.y) {
-                if (tmax.x < tmax.z) {
-                    voxelPos.x += stepDir.x;
-                    tmax.x += tDelta.x;
-                } else {
-                    voxelPos.z += stepDir.z;
-                    tmax.z += tDelta.z;
-                }
-            } else {
-                voxelPos.y += stepDir.y;
-                tmax.y += tDelta.y;
-            }
-            
-            
-            if (any(lessThanEqual(voxelPos,-bndr)) || any(greaterThanEqual(voxelPos,bndr))) {
+            if (any(lessThan(current,-bndr)) || any(greaterThan(current,bndr))) {
                 keepTraversing = false;
             } else {
-                Voxel voxelData = VoxelContents(voxelPos);
+                Voxel voxelData = VoxelContents(vec3(current));
                 if (voxelData.color.w > 0.0f) { finalVoxel = voxelData, keepTraversing = false; }
             }
         }
-    //}
+    }
 
     return finalVoxel;
 }
