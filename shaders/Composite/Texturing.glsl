@@ -58,11 +58,12 @@ void main(){
             const vec4 modelCenter = CameraSpaceToModelSpace(CameraCenterView);
             const vec4 modelPosition = CameraSpaceToModelSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
             const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
+            const vec4 subPos = CameraSpaceToModelSpace(vec4(sunPosition.xyz,1.f));
 
             colp[1] = atmosphere(
-                modelVector.xyz,                                 // normalized ray direction
-                modelPosition.xyz+vec3(0.f,6372e3f,0.f),         // planet position
-                sunPosition.xyz,                                 // position of the sun
+                modelVector.xyz,                                            // normalized ray direction
+                (modelPosition.xyz-modelCenter.xyz)+vec3(0.f,6372e3f,0.f),  // planet position
+                subPos.xyz,                                                 // position of the sun
                 40.0f,                                           // intensity of the sun
                 6371e3f,                                         // radius of the planet in meters
                 6471e3f,                                         // radius of the atmosphere in meters
