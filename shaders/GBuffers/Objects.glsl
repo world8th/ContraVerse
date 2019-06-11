@@ -25,6 +25,7 @@ vin vec4 vcolor gap;
 flat vin ivec4 vparametric gap;
 #endif
 
+// 
 #ifdef VSH
 attribute vec4 at_tangent;
 attribute vec3 mc_Entity;
@@ -123,15 +124,20 @@ void main() {
 
 	vec4  fcolor = fcolor;
     vec4  color = texture(tex, adjtx.st) * texture(lightmap, flmcoord.st) * fcolor;
-    float alpha = color.w, alpas = random(vec4(vpos.xyz,frameTimeCounter))<alpha ? 1.f : 0.f; 
-	color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
+    float alpha = color.w, alpas = random(vec4(vpos.xyz,frameTimeCounter))<alpha ? 1.f : 0.f;
+	color.xyz *= color.w;
+	color.w = sqrt(color.w);
+	color.xyz /= color.w;
 	
+	//color.xyz /= color.w; // un-multiply alpha 
+	//color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
+
     gl_FragDepth = gl_FragCoord.z+2.f;
 	gl_FragData[0] = vec4(0.f);
 	gl_FragData[1] = vec4(0.f);
 	gl_FragData[2] = vec4(0.f);
 	gl_FragData[3] = vec4(0.f);
-	
+
     if (all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx)) && facing && alpas > 0.f) {
 		gl_FragDepth = gl_FragCoord.z;
 		//gl_FragData[0] = vec4(color.xyz,alpha);
