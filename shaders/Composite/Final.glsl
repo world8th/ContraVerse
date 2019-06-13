@@ -25,8 +25,12 @@ void main(){
         const vec4 modelNormal = vec4(ltps[1].xyz*2.f-1.f,0.f)*gbufferModelView;
         const vec4 modelPosition = CameraSpaceToModelSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
         const vec4 modelCenter = CameraSpaceToModelSpace(CameraCenterView);
-        const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
+        const vec4 modelVector = vec4(normalize(defartu(modelPosition.xyz)-defartu(modelCenter.xyz)),0.f);
 
+
+        //Voxel vox = TraceVoxel(defartu(modelCenter.xyz),modelVector.xyz);
+        //if (fcoord.x < 0.5f && filled < 0.1f && vox.color.w > 0.f) { colp[1].xyz = vox.color.xyz; }; 
+        //if (fcoord.x < 0.5f && filled >= 0.1f && vox.color.w > 0.f) { colp[1].xyz = vox.color.xyz; }; 
 
         //colp[1].xyz = modelNormal.xyz*0.5f+0.5f;
         gl_FragColor = vec4(clamp(colp[1].xyz,0.f.xxx,1.f.xxx),1.f);

@@ -98,13 +98,13 @@ void main() {
         vec4 vertex = gl_in[i].gl_Position;
         vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
         vertex.xyz /= vertex.w;
-        vertex.xyz += cameraPosition.xyz;
+        vertex.xyz = fartu(vertex.xyz);//fract(cameraPosition.xyz);
 
         // set vertice 
         vertices[i] = vertex.xyz;
-        
+
         // reproject into shadow space 
-        vertex.xyz -= cameraPosition.xyz;
+        vertex.xyz = defartu(vertex.xyz);
         vertex.xyz *= vertex.w;
         vertex = shadowProjection * shadowModelView * vertex;
         vertex.xyz /= vertex.w;
@@ -140,11 +140,11 @@ void main() {
     vec3 centerOfTriangle = CenterOfTriangle(vertices);
     vec3 normalOfTriangle = normal;//NormalOfTriangle(vertices);
     vec3 offsetOfVoxel = CalcVoxelOfBlock(centerOfTriangle,normalOfTriangle);
-    vec3 tileOfBlock = TileOfVoxel(offsetOfVoxel);
-    vec3 tileOfCamera = TileOfVoxel(cameraPosition.xyz);
+    //vec3 tileOfBlock = TileOfVoxel(offsetOfVoxel);
+    //vec3 tileOfCamera = TileOfVoxel(cameraPosition.xyz);
     
     // 
-    if (FilterForVoxel(tileOfBlock-tileOfCamera,normalOfTriangle)) validVoxel = true;
+    if (FilterForVoxel(centerOfTriangle,normalOfTriangle)) validVoxel = true;
 
     // 
     if (validVoxel) {
@@ -155,23 +155,8 @@ void main() {
             vec4 vertex = gl_in[i].gl_Position;
             vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
             vertex.xyz /= vertex.w;
-            vertex.xyz += cameraPosition.xyz; // shift into world space
-
-            // normalize vertex 
-            vertex.xyz = floor(vertex.xyz + 0.0001f);
-
-            // get relative vertex offset (for render)
-            //vertex.xyz += tileOfBlock-offsetOfVoxel;
-
-            // convert into voxel and texture space (simple way)
-            vertex.xyz -= normalOfTriangle*0.0001f;
-            vertex.xz += floor(vertex.xz-tileOfBlock.xz + 0.0001f);
-
-            // convert into rendering space 
-            //vertex.xyz += aeraSize*0.5f;
-            vertex.xyz -= tileOfCamera;
-            vertex.xyz = VoxelToTextureSpace(vertex.xyz).xyz;
-            
+            vertex.xyz = fartu(vertex.xyz); // shift into world space
+            vertex.xyz = vec3(VoxelToTextureSpace(vec3(vertex.x,centerOfTriangle.y,vertex.z)).xy, 0.f); // 
 
             // integrity normal 
             fnormal *= shadowModelViewInverse, ftangent *= shadowModelViewInverse;

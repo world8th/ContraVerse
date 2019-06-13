@@ -1,5 +1,5 @@
 
-const vec3 tileSize = vec3(16.f,1.f,16.f), aeraSize = vec3(128.f,64.f,128.f);
+const vec3 tileSize = vec3(16.f,1.f,16.f), aeraSize = vec3(64.f,64.f,64.f);
 #define SHADOW_SIZE (float(shadowMapResolution)-aeraSize.x) // TODO: better shadow map correction
 #define SHADOW_SHIFT (aeraSize.x/float(shadowMapResolution))
 #define SHADOW_SIZE_RATE (SHADOW_SIZE/float(shadowMapResolution))
@@ -11,14 +11,14 @@ vec3 TileOfVoxel(in vec3 currentVoxel){
 // convert voxel into rendering space (fetching space)
 vec3 VoxelToTextureSpace(in vec3 tileSpace){
 #ifdef COMPOSITE
-    //tileSpace -= TileOfVoxel(cameraPosition); // gather in correct tile
+    //tileSpace += fract(cameraPosition.xyz); // gather in correct tile
 #endif
 
     // shift into unsigned space 
     tileSpace += aeraSize*0.5f;
 
     // flatify voxel coordinates
-    vec2 flatSpace = vec2(floor(tileSpace.x + 0.0001f),floor(tileSpace.y)*aeraSize.z+floor(tileSpace.z + 0.0001f));
+    vec2 flatSpace = vec2(floor(tileSpace.x + 0.0001f),floor(tileSpace.y + 0.0001f)*aeraSize.z+floor(tileSpace.z + 0.0001f));
     vec2 textSpaceSize = vec2(aeraSize.x,aeraSize.y*aeraSize.z);
 
     // shift into unsigned space 
@@ -79,6 +79,7 @@ Voxel VoxelContents(in vec3 tileSpace){
     voxelData.tbase = 0.f.xx;
     voxelData.param = 0.f.xx;
 
+    tileSpace -= 0.5f;
     if (all(greaterThanEqual(tileSpace,-aeraSize*0.5f)) && all(lessThan(tileSpace,aeraSize*0.5f))) {
         //const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
         const vec2 vect = VoxelToTextureSpace(floor(tileSpace+0.0001f)).xy;
@@ -105,7 +106,7 @@ Voxel VoxelContents(in vec3 tileSpace){
 #ifdef FSH
 
 vec2 intersect(in vec3 ro, in vec3 dir) {
-    const vec3 pmin = -aeraSize*0.5f, pmax = aeraSize*0.5f, ird = 1.f/dir;
+    const vec3 pmin = 0.f.xxx, pmax = aeraSize.xxx, ird = 1.f/dir;//-aeraSize.xxx*0.5f, pmax = aeraSize.xxx*0.5f, ird = 1.f/dir;
 	const vec3 tmin = (pmin - ro) * ird; // [-inf, inf]
 	const vec3 tmax = (pmax - ro) * ird; // [-inf, inf]
 	const vec3 bmin = min(tmin, tmax), bmax = max(tmin, tmax);
@@ -127,22 +128,23 @@ Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
     finalVoxel.tbase = 0.f.xx;
     finalVoxel.param = 0.f.xx;
 
-    //exactStartPos -= aeraSize*0.5f;
+    exactStartPos += aeraSize.xxx*0.5f;
     const vec2 tbox = intersect(exactStartPos, rayDir);
 
     if (tbox.y >= tbox.x && tbox.y >= 0.f) {
-        const ivec3 bndr = ivec3(128,64,128)/2;
-        const vec3 fbndr = aeraSize*0.5f;
+        const ivec3 bndr = ivec3(aeraSize.x);
+        const vec3 fbndr = 1.f.xxx;//aeraSize*0.5f;
 
-        const vec3 rayStrt = exactStartPos + rayDir*max(tbox.x+0.0001f,0.f), rayEnd = exactStartPos + rayDir*max(tbox.y-0.0001f,0.f), rayDir = rayEnd-rayStrt;
-        ivec3 current = ivec3(floor(rayStrt/fbndr)), last = ivec3(floor(rayEnd/fbndr));
+        const vec3 rayStrt = (exactStartPos + rayDir*max(tbox.x+0.0001f,0.f))/vec3(bndr), rayEnd = (exactStartPos + rayDir*max(tbox.y-0.0001f,0.f))/vec3(bndr), rayDir = rayEnd-rayStrt;
+        ivec3 current = ivec3(floor(rayStrt*vec3(bndr))), last = ivec3(floor(rayEnd*vec3(bndr)));
 
         const ivec3 stepd = mix(ivec3(-1),ivec3(1),greaterThanEqual(rayDir,0.f.xxx));
-        const vec3 nextVxl = vec3(current+stepd)*fbndr;
+        const vec3 nextVxl = vec3((current+stepd)/bndr);
 
         vec3 tmax = mix(10e5f.xxx,(nextVxl-rayStrt)/rayDir,notEqual(rayDir,0.f.xxx));
         vec3 tdelta = mix(10e5f.xxx,fbndr/rayDir*stepd,notEqual(rayDir,0.f.xxx));
-        //current -= mix(ivec3(0),ivec3(-1),and(notEqual(current,last),lessThan(rayDir,0.f.xxx)));
+        //current += mix(ivec3(0),ivec3(1),and(notEqual(current,last),lessThan(rayDir,0.f.xxx)));
+        current += mix(ivec3(0),ivec3(1),lessThan(rayDir,0.f.xxx));
 
         bool keepTraversing = true;
         while (keepTraversing) {
@@ -150,10 +152,10 @@ Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
             const int axis = minp == tmax.y ? 1 : (minp == tmax.z ? 2 : 0);
             current[axis] += stepd[axis], tmax[axis] += tdelta[axis];
             
-            if (any(lessThan(current,-bndr)) || any(greaterThan(current,bndr))) {
+            if (any(lessThan(current,vec3(0))) || any(greaterThanEqual(current,bndr))) {
                 keepTraversing = false;
             } else {
-                Voxel voxelData = VoxelContents(vec3(current));
+                Voxel voxelData = VoxelContents(vec3(current-bndr/2));
                 if (voxelData.color.w > 0.0f) { finalVoxel = voxelData, keepTraversing = false; }
             }
         }

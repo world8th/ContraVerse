@@ -1,5 +1,5 @@
 // configs of buffers
-const int shadowMapResolution = 8192;
+const int shadowMapResolution = 4096;
 
 #if defined(FSH) && defined(COMPOSITE)
 /*
@@ -147,14 +147,29 @@ vec4 CameraSpaceToScreenSpace(in vec4 cameraSpace){
 
 
 
+vec3 fartu(in vec3 relSpace) {
+    return (relSpace.xyz+cameraPosition.xyz)-floor(cameraPosition.xyz);
+}
+
+vec3 defartu(in vec3 fartuSpace) {
+    return (fartuSpace+floor(cameraPosition.xyz))-cameraPosition.xyz;
+}
+
+
+
+
 const vec4 CameraCenterView = vec4(0.f.xxx,1.f);
 
 vec4 CameraSpaceToModelSpace(in vec4 cameraSpace){
-    const vec4 modelSpaceProj = gbufferModelViewInverse*cameraSpace;
+    vec4 modelSpaceProj = gbufferModelViewInverse*cameraSpace;
+    modelSpaceProj.xyz = fartu(modelSpaceProj.xyz);
     return modelSpaceProj/modelSpaceProj.w;
 }
 
 vec4 ModelSpaceToCameraSpace(in vec4 modelSpace){
-    const vec4 cameraSpaceProj = gbufferModelView*modelSpace;
+    modelSpace.xyz = defartu(modelSpace.xyz);
+    vec4 cameraSpaceProj = gbufferModelView*modelSpace;
     return cameraSpaceProj/cameraSpaceProj.w;
 }
+
+
