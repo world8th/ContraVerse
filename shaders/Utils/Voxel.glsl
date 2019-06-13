@@ -79,10 +79,9 @@ Voxel VoxelContents(in vec3 tileSpace){
     voxelData.tbase = 0.f.xx;
     voxelData.param = 0.f.xx;
 
-    tileSpace -= 0.5f;
     if (all(greaterThanEqual(tileSpace,-aeraSize*0.5f)) && all(lessThan(tileSpace,aeraSize*0.5f))) {
         //const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
-        const vec2 vect = VoxelToTextureSpace(floor(tileSpace+0.0001f)).xy;
+        const vec2 vect = VoxelToTextureSpace(tileSpace).xy;
 
         const vec4 vcol = texelFetch(shadowcolor0, ivec2(vect), 0);
         const float vxcolr = vcol.x;//uintBitsToFloat(packUnorm4x8(vec4(fcolor.xyz*texture(lightmap,flmcoord.st).xyz,0.f))); // TODO: better pre-baked emission support
@@ -137,12 +136,10 @@ Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
 
         const vec3 rayStrt = (exactStartPos + rayDir*max(tbox.x+0.0001f,0.f))/vec3(bndr), rayEnd = (exactStartPos + rayDir*max(tbox.y-0.0001f,0.f))/vec3(bndr), rayDir = rayEnd-rayStrt;
         ivec3 current = ivec3(floor(rayStrt*vec3(bndr))), last = ivec3(floor(rayEnd*vec3(bndr)));
-
         const ivec3 stepd = mix(ivec3(-1),ivec3(1),greaterThanEqual(rayDir,0.f.xxx));
-        const vec3 nextVxl = vec3((current+stepd)/bndr);
 
-        vec3 tmax = mix(10e5f.xxx,(nextVxl-rayStrt)/rayDir,notEqual(rayDir,0.f.xxx));
-        vec3 tdelta = mix(10e5f.xxx,fbndr/rayDir*stepd,notEqual(rayDir,0.f.xxx));
+        vec3 tmax = mix(10e5f.xxx,(rayStrt-vec3(current+stepd)/vec3(bndr))/rayDir,notEqual(rayDir,0.f.xxx));
+        vec3 tdelta = mix(10e5f.xxx,fbndr*vec3(stepd)/rayDir,notEqual(rayDir,0.f.xxx));
         //current += mix(ivec3(0),ivec3(1),and(notEqual(current,last),lessThan(rayDir,0.f.xxx)));
         current += mix(ivec3(0),ivec3(1),lessThan(rayDir,0.f.xxx));
 
@@ -155,7 +152,7 @@ Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
             if (any(lessThan(current,vec3(0))) || any(greaterThanEqual(current,bndr))) {
                 keepTraversing = false;
             } else {
-                Voxel voxelData = VoxelContents(vec3(current-bndr/2));
+                Voxel voxelData = VoxelContents(vec3(current)-aeraSize*0.5f);
                 if (voxelData.color.w > 0.0f) { finalVoxel = voxelData, keepTraversing = false; }
             }
         }
