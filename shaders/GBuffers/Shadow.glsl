@@ -158,7 +158,7 @@ void main() {
             vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
             vertex.xyz /= vertex.w;
             vertex.xyz = fartu(vertex.xyz); // shift into world space
-            vec3 fft = vertex.xyz - offsetOfVoxel.xyz;
+            vec3 fft = round(vertex.xyz - offsetOfVoxel.xyz);
             if (abs(dot(normalOfTriangle,vec3(0.f,1.f,0.f))) > 0.9999f) fft.xyz = fft.zyx;
             if (abs(dot(normalOfTriangle,vec3(1.f,0.f,0.f))) > 0.9999f) fft.xyz = fft.zxy;
             if (abs(dot(normalOfTriangle,vec3(0.f,0.f,1.f))) > 0.9999f) fft.xyz = fft.yzx;
