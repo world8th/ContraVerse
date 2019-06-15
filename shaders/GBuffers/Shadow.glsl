@@ -138,7 +138,7 @@ void main() {
 
     // Pre-Calculate into Voxel-Space 
     vec3 centerOfTriangle = CenterOfTriangle(vertices);
-    vec3 normalOfTriangle = normal;//NormalOfTriangle(vertices);
+    vec3 normalOfTriangle = NormalOfTriangle(vertices);
     vec3 offsetOfVoxel = CalcVoxelOfBlock(centerOfTriangle,normalOfTriangle);
     //vec3 tileOfBlock = TileOfVoxel(offsetOfVoxel);
     //vec3 tileOfCamera = TileOfVoxel(cameraPosition.xyz);
@@ -156,7 +156,7 @@ void main() {
             vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
             vertex.xyz /= vertex.w;
             vertex.xyz = fartu(vertex.xyz); // shift into world space
-            vertex.xyz = vec3(VoxelToTextureSpace(vec3(vertex.x,centerOfTriangle.y-1.f,vertex.z)).xy, 0.f); // 
+            vertex.xyz = vec3(VoxelToTextureSpace(vec3(vertex.x,centerOfTriangle.y,vertex.z)).xy, 0.f); // 
 
             // integrity normal 
             fnormal *= shadowModelViewInverse, ftangent *= shadowModelViewInverse;
@@ -201,7 +201,7 @@ void main() {
 	//vec4 fcolor = fcolor;
     vec4  color = texture(tex, adjtx.st) * texture(lightmap, flmcoord.st) * fcolor;
     float alpha = color.w, alpas = random(vec4(vpos.xyz,frameTimeCounter))<alpha ? 1.f : 0.f; 
-	color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
+	//color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
 	
     // 
     gl_FragDepth = gl_FragCoord.z+2.f;
@@ -215,11 +215,9 @@ void main() {
 		if (isVoxel == 1) {
             // voxel can store only 8-bit color... 
             //const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
-            //const float vxcolr = uintBitsToFloat(packUnorm4x8(vec4(fcolor.xyz*texture(lightmap,flmcoord.st).xyz,1.f))); // TODO: better pre-baked emission support
-            //const float vxmisc = uintBitsToFloat(packUnorm4x8(vec4(0.f.xx,torig/atlas))); // first 16-bit uint's BROKEN
-            //const float vxdata = uintBitsToFloat(packUnorm2x16(fparametric.xy/65535.f)); // cheaper packing (for code)
-			//gl_FragData[0] = vec4(vxcolr,vxmisc,vxdata,1.f); // try to pack into one voxel
-            gl_FragData[0] = vec4(color.xyz,1.f);
+            //const vec3 ap3cp = pack3x2(mat2x3(vec3(torig/atlas,0.f),vec3(1.f-color.xyz*texture(lightmap,flmcoord.st).xyz)));
+            const vec3 ap3cp = 1.f-color.xyz;
+			gl_FragData[0] = vec4(ap3cp,1.f); // try to pack into one voxel
 		} else {
 			gl_FragData[0] = vec4(color); // packing is useless 
 		}

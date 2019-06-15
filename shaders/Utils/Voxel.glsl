@@ -48,7 +48,7 @@ vec3 CenterOfTriangle(in mat3 vertices){
 
 // calculate voxel offset by block triangle center 
 vec3 CalcVoxelOfBlock(in vec3 centerOfBlockTriangle, in vec3 surfaceNormal){
-    return floor(centerOfBlockTriangle-surfaceNormal*0.0001f); // correctify
+    return floor(centerOfBlockTriangle-surfaceNormal*0.5f); // correctify
 }
 
 // calculate surface normal of blocks
@@ -58,10 +58,9 @@ vec3 NormalOfTriangle(in mat3 vertices){
 
 
 struct Voxel {
-    vec4 position;
-    vec4 color;
+    vec3 position; uint param;
+    vec3 color;
     vec2 tbase;
-    vec2 param;
 };
 
 #ifndef TEXTURE_SIZE
@@ -72,22 +71,23 @@ struct Voxel {
 #ifdef FSH
 Voxel VoxelContents(in vec3 tileSpace){
     Voxel voxelData;
-    voxelData.color = 0.f.xxxx;
+    voxelData.color = 0.f.xxx;
     voxelData.tbase = 0.f.xx;
-    voxelData.param = 0.f.xx;
+    voxelData.param = 0u;
 
     if (all(greaterThanEqual(tileSpace,0.f.xxx)) && all(lessThan(tileSpace,aeraSize))) {
-        const vec4 vcol = texelFetch(shadowcolor0, ivec2(VoxelToTextureSpace(tileSpace-vec3(1,1,1)).xy), 0);
-        const float vxcolr = vcol.x;//uintBitsToFloat(packUnorm4x8(vec4(fcolor.xyz*texture(lightmap,flmcoord.st).xyz,0.f))); // TODO: better pre-baked emission support
-        const float vxmisc = vcol.y;//uintBitsToFloat(packUnorm4x8(vec4(0.f.xx,torig/atlas))); // first 16-bit uint's BROKEN
-        const float vxdata = vcol.z;//uintBitsToFloat(packUnorm2x16(fparametric.xy/65535.f)); // cheaper packing (for code)
+        const vec4 voxy = texelFetch(shadowcolor0, ivec2(VoxelToTextureSpace(tileSpace-vec3(1,0,1)).xy), 0);
+        //const mat2x3 colp = unpack3x2(voxy.xyz);
 
-        if (!all(equal(vcol.xyz,1.f.xxx))) {
-            voxelData.position = vec4(tileSpace,1.f);
-            voxelData.color = vcol;//unpackUnorm4x8(floatBitsToUint(vxcolr));
-            voxelData.tbase = unpackUnorm4x8(floatBitsToUint(vxmisc)).zw;
-            voxelData.param = unpackUnorm2x16(floatBitsToUint(vxdata))*65535.f;
-        };
+        voxelData.position = tileSpace;
+        voxelData.color = 1.f-voxy.xyz;//1.f-colp[1].xyz;
+        voxelData.tbase = 0.f.xx;//colp[0].xy;
+        voxelData.param = 0u;//floatBitsToUint(voxy.w);
+        if (voxy.w < 1.f) voxelData.color = 0.f.xxx;
+        
+        //if (all(lessThanEqual(voxelData.color,0.f.xxx))) {
+        //    voxelData.color = 0.f.xxx;
+        //};
     };
 
     return voxelData;
@@ -117,9 +117,9 @@ Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
     
 
     Voxel finalVoxel;
-    finalVoxel.color = 0.f.xxxx;
+    finalVoxel.color = 0.f.xxx;
     finalVoxel.tbase = 0.f.xx;
-    finalVoxel.param = 0.f.xx;
+    finalVoxel.param = 0u;
 
     exactStartPos += aeraSize.xxx*0.5f + fract(cameraPosition);
     const vec2 tbox = intersect(exactStartPos, rayDir);
@@ -142,11 +142,11 @@ Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
             const int axis = minp == tmax.y ? 1 : (minp == tmax.z ? 2 : 0);
             current[axis] += stepd[axis], tmax[axis] += tdelta[axis];
             
-            if (any(lessThan(current,vec3(0))) || any(greaterThanEqual(current,ivec3(aeraSize.x)))) {
+            if (any(lessThanEqual(current,ivec3(0))) || any(greaterThanEqual(current,ivec3(aeraSize.x)))) {
                 keepTraversing = false;
             } else {
                 Voxel voxelData = VoxelContents(vec3(current));
-                if (voxelData.color.w > 0.0f) { finalVoxel = voxelData, keepTraversing = false; }
+                if (any(greaterThan(voxelData.color.xyz,0.f.xxx))) { finalVoxel = voxelData, keepTraversing = false; }
             }
         }
     }
