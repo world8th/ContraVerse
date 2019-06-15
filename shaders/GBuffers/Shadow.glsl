@@ -156,7 +156,7 @@ void main() {
             vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
             vertex.xyz /= vertex.w;
             vertex.xyz = fartu(vertex.xyz); // shift into world space
-            vertex.xyz = vec3(VoxelToTextureSpace(vec3(vertex.x,centerOfTriangle.y,vertex.z)).xy, 0.f); // 
+            vertex.xyz = vec3(VoxelToTextureSpace(vec3(vertex.x,centerOfTriangle.y-1.f,vertex.z)).xy, 0.f); // 
 
             // integrity normal 
             fnormal *= shadowModelViewInverse, ftangent *= shadowModelViewInverse;

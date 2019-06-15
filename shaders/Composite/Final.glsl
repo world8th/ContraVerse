@@ -21,7 +21,7 @@ void main(){
         const vec2 buffersize = textureSize(colortex0,0);
 
 
-        const vec4 screenSpaceCorrect = vec4(fma(texcoord.xy,2.0f.xx,-1.f.xx),  0.001f , 1.f);
+        const vec4 screenSpaceCorrect = vec4(fma(texcoord.xy,2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
         const vec4 modelNormal = vec4(ltps[1].xyz*2.f-1.f,0.f)*gbufferModelView;
         const vec4 modelPosition = CameraSpaceToModelSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
         const vec4 modelCenter = CameraSpaceToModelSpace(CameraCenterView);

@@ -162,12 +162,12 @@ const vec4 CameraCenterView = vec4(0.f.xxx,1.f);
 
 vec4 CameraSpaceToModelSpace(in vec4 cameraSpace){
     vec4 modelSpaceProj = gbufferModelViewInverse*cameraSpace;
-    modelSpaceProj.xyz = fartu(modelSpaceProj.xyz);
+    //modelSpaceProj.xyz = fartu(modelSpaceProj.xyz);
     return modelSpaceProj/modelSpaceProj.w;
 }
 
 vec4 ModelSpaceToCameraSpace(in vec4 modelSpace){
-    modelSpace.xyz = defartu(modelSpace.xyz);
+    //modelSpace.xyz = defartu(modelSpace.xyz);
     vec4 cameraSpaceProj = gbufferModelView*modelSpace;
     return cameraSpaceProj/cameraSpaceProj.w;
 }
