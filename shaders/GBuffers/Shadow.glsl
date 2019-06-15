@@ -54,6 +54,7 @@ uniform sampler2D lightmap;
 uniform ivec2 atlasSize;
 
 // 
+
 void main() {
 #ifdef VSH
 
@@ -138,7 +139,7 @@ void main() {
 
     // Pre-Calculate into Voxel-Space 
     vec3 centerOfTriangle = CenterOfTriangle(vertices);
-    vec3 normalOfTriangle = NormalOfTriangle(vertices);
+    vec3 normalOfTriangle = normal.xyz;//NormalOfTriangle(vertices);
     vec3 offsetOfVoxel = CalcVoxelOfBlock(centerOfTriangle,normalOfTriangle);
     //vec3 tileOfBlock = TileOfVoxel(offsetOfVoxel);
     //vec3 tileOfCamera = TileOfVoxel(cameraPosition.xyz);
@@ -147,17 +148,24 @@ void main() {
     if (FilterForVoxel(centerOfTriangle,normalOfTriangle)) validVoxel = true;
 
     // 
-    if (validVoxel) {
+    if (validVoxel && vparametric[0].x != 0.f) {
         for (int i = 0; i < 3; i++) {
             fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
 
             // get world space vertex
             vec4 vertex = gl_in[i].gl_Position;
+
             vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
             vertex.xyz /= vertex.w;
             vertex.xyz = fartu(vertex.xyz); // shift into world space
-            vertex.xyz = vec3(VoxelToTextureSpace(vec3(vertex.x,centerOfTriangle.y,vertex.z)).xy, 0.f); // 
+            vec3 fft = vertex.xyz - offsetOfVoxel.xyz;
+            if (abs(dot(normalOfTriangle,vec3(0.f,1.f,0.f))) > 0.9999f) fft.xyz = fft.zyx;
+            if (abs(dot(normalOfTriangle,vec3(1.f,0.f,0.f))) > 0.9999f) fft.xyz = fft.zxy;
+            if (abs(dot(normalOfTriangle,vec3(0.f,0.f,1.f))) > 0.9999f) fft.xyz = fft.yzx;
 
+            //vertex.xyz = vec3(VoxelToTextureSpace(vec3(vertex.x,offsetOfVoxel.y,vertex.z)).xy, 0.f); // 
+            vertex.xyz = vec3(VoxelToTextureSpace(vec3(offsetOfVoxel.x+fft.x,offsetOfVoxel.y,offsetOfVoxel.z+fft.z)).xy, 0.f); // 
+            
             // integrity normal 
             fnormal *= shadowModelViewInverse, ftangent *= shadowModelViewInverse;
 

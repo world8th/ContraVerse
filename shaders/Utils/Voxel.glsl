@@ -37,7 +37,12 @@ vec3 VoxelToTextureSpace(in vec3 tileSpace){
 
 // get valid surface... 
 bool FilterForVoxel(in vec3 voxelPosition, in vec3 normalOfBlock){
-    return abs(dot(normalOfBlock,vec3(0.f,1.f,0.f))) > 0.9999f && all(greaterThanEqual(voxelPosition,-aeraSize*0.5f)) && all(lessThan(voxelPosition,aeraSize*0.5f));
+    //return abs(dot(normalOfBlock,vec3(0.f,1.f,0.f))) > 0.9999f && all(greaterThanEqual(voxelPosition,-aeraSize*0.5f)) && all(lessThan(voxelPosition,aeraSize*0.5f));
+    return 
+        (abs(dot(normalOfBlock,vec3(0.f,1.f,0.f))) > 0.9999f || 
+         abs(dot(normalOfBlock,vec3(1.f,0.f,0.f))) > 0.9999f || 
+         abs(dot(normalOfBlock,vec3(0.f,0.f,1.f))) > 0.9999f) && 
+        all(greaterThanEqual(voxelPosition,-aeraSize*0.5f)) && all(lessThan(voxelPosition,aeraSize*0.5f));
 }
 
 // needs for make and add offset of voxel 
@@ -48,7 +53,7 @@ vec3 CenterOfTriangle(in mat3 vertices){
 
 // calculate voxel offset by block triangle center 
 vec3 CalcVoxelOfBlock(in vec3 centerOfBlockTriangle, in vec3 surfaceNormal){
-    return floor(centerOfBlockTriangle-surfaceNormal*0.5f); // correctify
+    return floor(centerOfBlockTriangle-surfaceNormal*0.25f); // correctify
 }
 
 // calculate surface normal of blocks
@@ -76,7 +81,7 @@ Voxel VoxelContents(in vec3 tileSpace){
     voxelData.param = 0u;
 
     if (all(greaterThanEqual(tileSpace,0.f.xxx)) && all(lessThan(tileSpace,aeraSize))) {
-        const vec4 voxy = texelFetch(shadowcolor0, ivec2(VoxelToTextureSpace(tileSpace-vec3(1,0,1)).xy), 0);
+        const vec4 voxy = texelFetch(shadowcolor0, ivec2(VoxelToTextureSpace(tileSpace-vec3(1,1,1)).xy), 0);
         //const mat2x3 colp = unpack3x2(voxy.xyz);
 
         voxelData.position = tileSpace;
@@ -114,8 +119,6 @@ bvec3 and(in bvec3 a, in bvec3 b){
 
 
 Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
-    
-
     Voxel finalVoxel;
     finalVoxel.color = 0.f.xxx;
     finalVoxel.tbase = 0.f.xx;
