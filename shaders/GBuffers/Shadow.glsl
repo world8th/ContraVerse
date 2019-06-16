@@ -29,10 +29,7 @@ flat vin ivec4 vparametric gap;
 attribute vec4 at_tangent;
 attribute vec3 mc_Entity;
 attribute vec2 mc_midTexCoord;
-vec4 correctNormal() {
-    vec4 normal = vec4(gl_NormalMatrix*gl_Normal,0.f);
-    return normal*shadowModelView;
-}
+vec4 correctNormal() { return vec4(gl_NormalMatrix*gl_Normal,0.f)*shadowModelView; }
 #endif
 
 #ifndef TEXTURE_SIZE
@@ -120,8 +117,8 @@ void main() {
         vertex.xy = fma(vertex.xy, 0.5f.xx, 0.5f.xx);
 
         // shadow-space render-side
-        vertex.x *= (float(shadowMapResolution)-aeraSize.x)/float(shadowMapResolution);
-        vertex.x += aeraSize.x/float(shadowMapResolution); // TODO: better shadow resolution support 
+        vertex.x *= (float(shadowMapResolution)-contraSize.x)/float(shadowMapResolution);
+        vertex.x += contraSize.x/float(shadowMapResolution); // TODO: better shadow resolution support 
 
         // re-correct screen space coordination for rendering
         vertex.xy = fma(vertex.xy, 2.f.xx, -1.f.xx);
@@ -143,29 +140,30 @@ void main() {
     vec3 offsetOfVoxel = CalcVoxelOfBlock(centerOfTriangle,normalOfTriangle);
     //vec3 tileOfBlock = TileOfVoxel(offsetOfVoxel);
     //vec3 tileOfCamera = TileOfVoxel(cameraPosition.xyz);
-    
+
     // 
     if (FilterForVoxel(centerOfTriangle,normalOfTriangle)) validVoxel = true;
 
     // 
-    if (validVoxel && vparametric[0].x != 0.f) {
+    if (validVoxel) {
         for (int i = 0; i < 3; i++) {
             fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
 
             // get world space vertex
             vec4 vertex = gl_in[i].gl_Position;
-
             vertex = shadowModelViewInverse * shadowProjectionInverse * vertex;
             vertex.xyz /= vertex.w;
             vertex.xyz = fartu(vertex.xyz); // shift into world space
+
+            // 
             vec3 fft = round(vertex.xyz - offsetOfVoxel.xyz);
             if (abs(dot(normalOfTriangle,vec3(0.f,1.f,0.f))) > 0.9999f) fft.xyz = fft.zyx;
             if (abs(dot(normalOfTriangle,vec3(1.f,0.f,0.f))) > 0.9999f) fft.xyz = fft.zxy;
             if (abs(dot(normalOfTriangle,vec3(0.f,0.f,1.f))) > 0.9999f) fft.xyz = fft.yzx;
 
-            //vertex.xyz = vec3(VoxelToTextureSpace(vec3(vertex.x,offsetOfVoxel.y,vertex.z)).xy, 0.f); // 
-            vertex.xyz = vec3(VoxelToTextureSpace(vec3(offsetOfVoxel.x+fft.x,offsetOfVoxel.y,offsetOfVoxel.z+fft.z)).xy, 0.f); // 
-            
+            // 
+            vertex.xyz = vec3(VoxelToTextureSpace(vec3(offsetOfVoxel.x+fft.x,offsetOfVoxel.y,offsetOfVoxel.z+fft.z)*vec3(2.f,1.f,2.f)).xy,0.f); // 
+
             // integrity normal 
             fnormal *= shadowModelViewInverse, ftangent *= shadowModelViewInverse;
 
@@ -185,10 +183,12 @@ void main() {
 
 	vec2 fcoord = gl_FragCoord.xy/vec2(1.f,float(shadowMapResolution)); // TODO: better shadow resolution
     if (isVoxel == 1) {
-        fcoord.x = (fcoord.x - 0.f) / aeraSize.x;
+        fcoord.x = (fcoord.x - 0.f) / contraSize.x;
     } else {
-        fcoord.x = (fcoord.x - aeraSize.x) / SHADOW_SIZE.x;
+        fcoord.x = (fcoord.x - contraSize.x) / SHADOW_SIZE.x;
     }
+    const lowp ivec2 iwep = ivec2(gl_FragCoord.xy)&1;
+    const lowp int qwap = iwep.x|(iwep.y<<1);
 
 	vec4 vpos = vec4(fcoord.xy,gl_FragCoord.z,1.f);
 	vpos.xy   = fma(vpos.xy,2.f.xx,-1.f.xx);
@@ -210,11 +210,11 @@ void main() {
     vec4  color = texture(tex, adjtx.st) * texture(lightmap, flmcoord.st) * fcolor;
     float alpha = color.w, alpas = random(vec4(vpos.xyz,frameTimeCounter))<alpha ? 1.f : 0.f; 
 	//color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
-	
+
     // 
     gl_FragDepth = gl_FragCoord.z+2.f;
 	gl_FragData[0] = vec4(0.f);
-	
+
     // make shadow or voxel... 
     if (all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx))) {
 		gl_FragDepth = gl_FragCoord.z; // in voxel space, used only fomally 
@@ -222,10 +222,10 @@ void main() {
 
 		if (isVoxel == 1) {
             // voxel can store only 8-bit color... 
-            //const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
+            const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
             //const vec3 ap3cp = pack3x2(mat2x3(vec3(torig/atlas,0.f),vec3(1.f-color.xyz*texture(lightmap,flmcoord.st).xyz)));
-            const vec3 ap3cp = 1.f-color.xyz;
-			gl_FragData[0] = vec4(ap3cp,1.f); // try to pack into one voxel
+			if (qwap == 0) gl_FragData[0] = vec4(1.f-color.xyz,1.f); // try to pack into one voxel
+            if (qwap == 1) gl_FragData[1] = vec4(torig,0.f,1.f);
 		} else {
 			gl_FragData[0] = vec4(color); // packing is useless 
 		}

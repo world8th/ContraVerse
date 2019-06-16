@@ -1,9 +1,11 @@
 
-const vec3 tileSize = vec3(16.f,1.f,16.f), aeraSize = vec3(64.f,64.f,64.f);
-#define SHADOW_SIZE (float(shadowMapResolution)-aeraSize.x) // TODO: better shadow map correction
-#define SHADOW_SHIFT (aeraSize.x/float(shadowMapResolution))
+const vec3 tileSize = vec3(16.f,1.f,16.f), aeraSize = vec3(64.f,64.f,64.f), contraSize = vec3(128.f,64.f,128.f);
+
+#define SHADOW_SIZE (float(shadowMapResolution)-contraSize.x) // TODO: better shadow map correction
+#define SHADOW_SHIFT (contraSize.x/float(shadowMapResolution))
 #define SHADOW_SIZE_RATE (SHADOW_SIZE/float(shadowMapResolution))
 
+// 
 vec3 TileOfVoxel(in vec3 currentVoxel){
     return floor(floor(currentVoxel + 0.0001f) / tileSize) * tileSize;
 }
@@ -13,12 +15,14 @@ vec3 VoxelToTextureSpace(in vec3 tileSpace){
 
     // shift into unsigned space 
 #ifndef COMPOSITE
-    tileSpace += aeraSize*0.5f;
+    tileSpace += contraSize*0.5f;
+#else
+    tileSpace *= vec3(2.f,1.f,2.f);
 #endif
 
     // flatify voxel coordinates
-    vec2 flatSpace = vec2(floor(tileSpace.x + 0.0001f),floor(tileSpace.y + 0.0001f)*aeraSize.z+floor(tileSpace.z + 0.0001f));
-    vec2 textSpaceSize = vec2(aeraSize.x,aeraSize.y*aeraSize.z);
+    vec2 flatSpace = vec2(round(tileSpace.x),round(tileSpace.y)*contraSize.z+round(tileSpace.z));
+    //vec2 textSpaceSize = vec2(aeraSize.x,aeraSize.y*aeraSize.z);
 
     // shift into unsigned space 
     //flatSpace += textSpaceSize*0.5f;
@@ -32,7 +36,7 @@ vec3 VoxelToTextureSpace(in vec3 tileSpace){
 #endif
 
     // return pixel corrected
-    return vec3(flatSpace,(floor(tileSpace.y + 0.0001f)+aeraSize.y*0.5f)/aeraSize.y);
+    return vec3(flatSpace,0.f);
 }
 
 // get valid surface... 
@@ -47,13 +51,14 @@ bool FilterForVoxel(in vec3 voxelPosition, in vec3 normalOfBlock){
 
 // needs for make and add offset of voxel 
 vec3 CenterOfTriangle(in mat3 vertices){
-    //return (vertices[0]+vertices[1]+vertices[2])*0.3333333f;
-    return floor(min(vertices[0],min(vertices[1],vertices[2])) + 0.0001f);
+    return (vertices[0]+vertices[1]+vertices[2])*0.3333333f;
+    //return floor(min(vertices[0],min(vertices[1],vertices[2])) + 0.001f);
+    //return min(vertices[0],min(vertices[1],vertices[2]));
 }
 
 // calculate voxel offset by block triangle center 
 vec3 CalcVoxelOfBlock(in vec3 centerOfBlockTriangle, in vec3 surfaceNormal){
-    return floor(centerOfBlockTriangle-surfaceNormal*0.25f); // correctify
+    return floor(centerOfBlockTriangle-surfaceNormal*0.5f); // correctify
 }
 
 // calculate surface normal of blocks
@@ -134,8 +139,8 @@ Voxel TraceVoxel(in vec3 exactStartPos, in vec3 rayDir){
         ivec3 current = ivec3(floor(exactStartPos)), last = ivec3(floor(rayEnd*aeraSize.x));
         const ivec3 stepd = mix(ivec3(-1),ivec3(1),greaterThanEqual(rayDir,0.f.xxx));
 
-        vec3 tmax = mix(10e5f.xxx,(current-exactStartPos)/(rayDir),notEqual(rayDir,0.f.xxx));
-        vec3 tdelta = mix(10e5f.xxx,vec3(stepd)/rayDir,notEqual(rayDir,0.f.xxx));
+        vec3 tmax = mix(10e5f.xxx,(current-exactStartPos)/rayDir,greaterThanEqual(abs(rayDir),1e-5f.xxx));
+        vec3 tdelta = mix(10e5f.xxx,          vec3(stepd)/rayDir,greaterThanEqual(abs(rayDir),1e-5f.xxx));
         //current += mix(ivec3(0),ivec3(1),and(notEqual(current,last),lessThan(rayDir,0.f.xxx)));
         current += mix(ivec3(0),ivec3(1),lessThan(rayDir,0.f.xxx));
 

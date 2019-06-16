@@ -1,5 +1,5 @@
 // configs of buffers
-const int shadowMapResolution = 4096;
+const int shadowMapResolution = 8192;
 
 #if defined(FSH) && defined(COMPOSITE)
 /*
@@ -31,8 +31,8 @@ const int depthtex1Format = R32F;
 // Shadow
 const int shadowtex0Format = R32F;
 const int shadowtex1Format = R32F;
-const int shadowcolor0Format = RGBA32F;
-const int shadowcolor1Format = RGBA32F;
+const int shadowcolor0Format = RGBA8;
+const int shadowcolor1Format = RGBA8;
 */
 
 // reserved and used by composite and some deferred programs (but may be filled from GBuffers)

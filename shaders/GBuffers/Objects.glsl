@@ -84,8 +84,8 @@ void main() {
 
 #endif
 
-#ifdef GSH
-#include "./Splitter.glsl" // Split-Screen Buffer Processor (for Get Noisy Transparency and Solid Substance)
+#ifdef GSH // Split-Screen Buffer Processor (for Get Noisy Transparency and Solid Substance)
+#include "./Splitter.glsl" 
 #endif
 
 #ifdef FSH
@@ -107,14 +107,15 @@ void main() {
     const vec4 tnormal = fnormal; // TODO: modify normals for transparents
 	const vec4 tangent = ftangent;
 
+	// Yob'Apple Face ID
 #if defined(TERRAIN) || defined(BLOCK) || defined(WATER)
-	bool facing = dot(normalize(vpos.xyz),normalize(tnormal.xyz))<=0.f;
+	const bool facing = dot(normalize(vpos.xyz),normalize(tnormal.xyz))<=0.f;
 #else
-	bool facing = true;
+	const bool facing = true;
 #endif
-
 	if (!facing) discard;
 
+	// 
 	float fogFactor = 1.f;
 	if (fogMode == FOGMODE_EXP) {
 		fogFactor = clamp(exp(-gl_Fog.density * gl_FogFragCoord), 0.0f, 1.0f);
@@ -122,15 +123,19 @@ void main() {
 		fogFactor = 1.0f - clamp((gl_FogFragCoord - gl_Fog.start) * gl_Fog.scale, 0.0f, 1.0f);
 	}
 
-	vec4  fcolor = fcolor;
-    vec4  color = texture(tex, adjtx.st) * texture(lightmap, flmcoord.st) * fcolor;
-    float alpha = color.w, alpas = random(vec4(vpos.xyz,frameTimeCounter))<alpha ? 1.f : 0.f;
-	color.xyz *= color.w;
+	// Color: Putler Edition 
+	vec4 color = texture(tex, adjtx.st) * texture(lightmap, flmcoord.st) * fcolor;
+	//color.xyz *= color.w;
 	color.w = sqrt(color.w);
-	color.xyz /= color.w;
-	
+	color.xyz *= color.w;
+	//color.xyz /= color.w;
+
 	//color.xyz /= color.w; // un-multiply alpha 
 	//color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
+
+	// Лэпшэ Нэвэльного! Govno Putlera! 
+    const float alpha = color.w, alpas = random(vec4(vpos.xyz,frameTimeCounter))<alpha ? 1.f : 0.f;
+
 
     gl_FragDepth = gl_FragCoord.z+2.f;
 	gl_FragData[0] = vec4(0.f);
@@ -138,6 +143,7 @@ void main() {
 	gl_FragData[2] = vec4(0.f);
 	gl_FragData[3] = vec4(0.f);
 
+	// Russi Hohlo Nazi Swastika Edition!
     if (all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx)) && facing && alpas > 0.f) {
 		gl_FragDepth = gl_FragCoord.z;
 		//gl_FragData[0] = vec4(color.xyz,alpha);
@@ -146,10 +152,9 @@ void main() {
 #else
 		const bool deferred = false;
 #endif
-		if (deferred) {
-			fcolor *= texture(lightmap, flmcoord.st); // add lightmap into... 
-			const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
-			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz)),alpas);
+		if (deferred) { 
+			const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas); // Holy Star Wars!
+			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz*texture(lightmap, flmcoord.st).xyz)),alpas);
 			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);
 			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(torig.xy,0.f),tangent.xyz*0.5f+0.5f)),alpas);
 			gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);

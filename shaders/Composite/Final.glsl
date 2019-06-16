@@ -2,7 +2,7 @@
 
 gin vec4 texcoord;
 
-void main(){
+void main() {
     #ifdef VSH
         texcoord = gl_MultiTexCoord0;
         gl_Position = ftransform();
