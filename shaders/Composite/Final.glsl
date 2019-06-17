@@ -29,8 +29,6 @@ void main() {
         const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
 
 
-        //Voxel voxelData = TraceVoxel(modelCenter.xyz,modelVector.xyz);
-        //if (fcoord.x < 0.5f && filled >= 0.1f && any(greaterThan(voxelData.color,0.f.xxx))) { colp[1].xyz = voxelData.color.xyz; }; 
 
         //colp[1].xyz = modelNormal.xyz*0.5f+0.5f;
         if (fcoord.x < 0.5f && filled >= 0.1f) {

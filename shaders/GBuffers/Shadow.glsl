@@ -162,7 +162,9 @@ void main() {
             if (abs(dot(normalOfTriangle,vec3(0.f,0.f,1.f))) > 0.9999f) fft.xyz = fft.yzx;
 
             // 
-            vertex.xyz = vec3(VoxelToTextureSpace(vec3(offsetOfVoxel.x+fft.x,offsetOfVoxel.y,offsetOfVoxel.z+fft.z)*vec3(2.f,1.f,2.f)).xy,0.f); // 
+            const vec3 ntile = vec3(offsetOfVoxel.x+fft.x,offsetOfVoxel.y,offsetOfVoxel.z+fft.z);
+            const vec3 ttile = (ntile+32.f)*vec3(2.f,1.f,2.f);
+            vertex.xyz = vec3(VoxelToTextureSpace(ttile).xy,0.f); // 
 
             // integrity normal 
             fnormal *= shadowModelViewInverse, ftangent *= shadowModelViewInverse;
