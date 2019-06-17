@@ -11,10 +11,11 @@ void main() {
         
     #endif
     #ifdef FSH
-        vec2 fcoord = texcoord.xy * vec2(0.5f,1.f);
-        vec3 cps = texture(colortex0,fcoord.xy).xyz;
+        const vec2 fcoord = texcoord.xy * vec2(0.5f,1.f);
+        const vec3 cps = texture(colortex0,fcoord.xy).xyz;
         mat2x3 colp = unpack3x2(cps);
-        mat2x3 ltps = unpack3x2(texture(colortex1,fcoord.xy).xyz);
+        mat2x3 ltps = unpack3x2(texture(gbuffers1,fcoord.xy).xyz);
+        mat2x3 rtps = unpack3x2(texture(colortex2,fcoord.xy).xyz);
 
         const float filled = texture(colortex0,fcoord.xy).w;
         const vec2 shadowsize = textureSize(shadowcolor0,0);
@@ -32,6 +33,9 @@ void main() {
         //if (fcoord.x < 0.5f && filled >= 0.1f && any(greaterThan(voxelData.color,0.f.xxx))) { colp[1].xyz = voxelData.color.xyz; }; 
 
         //colp[1].xyz = modelNormal.xyz*0.5f+0.5f;
+        if (fcoord.x < 0.5f && filled >= 0.1f) {
+            colp[1].xyz = mix(colp[1].xyz,rtps[1].xyz,0.5f);
+        };
         gl_FragColor = vec4(clamp(colp[1].xyz,0.f.xxx,1.f.xxx),1.f);
     #endif
 }

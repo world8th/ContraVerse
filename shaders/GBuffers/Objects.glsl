@@ -152,7 +152,7 @@ void main() {
 #else
 		const bool deferred = false;
 #endif
-		if (deferred) { 
+		if (deferred) {
 			const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas); // Holy Star Wars!
 			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz*texture(lightmap, flmcoord.st).xyz)),alpas);
 			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);

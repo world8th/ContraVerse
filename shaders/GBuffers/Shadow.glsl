@@ -224,7 +224,7 @@ void main() {
             // voxel can store only 8-bit color... 
             const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
             //const vec3 ap3cp = pack3x2(mat2x3(vec3(torig/atlas,0.f),vec3(1.f-color.xyz*texture(lightmap,flmcoord.st).xyz)));
-			if (qwap == 0) gl_FragData[0] = vec4(1.f-color.xyz,1.f); // try to pack into one voxel
+			if (qwap == 0) gl_FragData[0] = vec4(1.f-color.xyz,color.w); // try to pack into one voxel
             if (qwap == 1) gl_FragData[1] = vec4(torig,0.f,1.f);
 		} else {
 			gl_FragData[0] = vec4(color); // packing is useless 
