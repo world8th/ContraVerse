@@ -54,15 +54,26 @@ void main(){
         // fill main buffer with sky-color
         float filled = texture(gbuffers0,fcoord.xy).w;
         if (fcoord.x < 0.5f && filled < 0.1f) {
-            const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord*vec2(2.f,1.f)),2.0f.xx,-1.f.xx),  0.001f , 1.f);
-            const vec4 modelCenter = CameraSpaceToModelSpace(CameraCenterView);
-            const vec4 modelPosition = CameraSpaceToModelSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
+            const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,1.f)),2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
+            const vec4 cameraNormal = vec4(ltps[1].xyz*2.f-1.f,0.f);
+            const vec4 cameraSPosition = ScreenSpaceToCameraSpace(screenSpaceCorrect);
+            const vec4 cameraCenter = CameraCenterView;
+            const vec4 cameraVector = vec4(normalize(cameraSPosition.xyz),0.f);
+            const vec3 reflVector = normalize(reflect(cameraVector.xyz,cameraNormal.xyz));
+            const vec3 reflOrigin = cameraSPosition.xyz + cameraCenter.xyz + reflVector.xyz;
+
+            const vec4 modelNormal = cameraNormal*gbufferModelView;
+            const vec4 modelSPosition = CameraSpaceToModelSpace(cameraSPosition);
+            const vec4 modelCenter = CameraSpaceToModelSpace(cameraCenter);
+            const vec4 modelRefl = CameraSpaceToModelSpace(vec4(reflOrigin,1.f));
+            const vec3 modelPosition = modelSPosition.xyz+modelCenter.xyz;
             const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
+
             const vec4 subPos = CameraSpaceToModelSpace(vec4(sunPosition.xyz,1.f));
 
             colp[1] = to_linear(atmosphere(
                 modelVector.xyz,                                            // normalized ray direction
-                (modelPosition.xyz-modelCenter.xyz)+vec3(0.f,6372e3f,0.f),  // planet position
+                modelPosition.xyz+vec3(0.f,6372e3f,0.f),  // planet position
                 subPos.xyz,                                                 // position of the sun
                 40.0f,                                           // intensity of the sun
                 6371e3f,                                         // radius of the planet in meters

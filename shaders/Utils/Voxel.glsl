@@ -120,8 +120,8 @@ Voxel TraceVoxel(in vec3 p0, in vec3 d){
     finalVoxel.tbase = 0.f.xx;
     finalVoxel.param = 0u;
 
-    const vec3 op = p0;
-    p0 = p0*0.5f + aeraSize*0.5f + fract(cameraPosition);
+    //const vec3 op = p0;
+    p0 += aeraSize*0.5f;// + fract(cameraPosition);
 
     const vec2 tbox = intersect(p0, d, 0.f.xxx-0.0001f, aeraSize+0.0001f);
     if (tbox.y >= tbox.x && tbox.y >= 0.f) { p0 += d*max(tbox.x,0.f);
