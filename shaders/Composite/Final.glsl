@@ -31,6 +31,6 @@ void main() {
 
 
 
-        gl_FragColor = vec4(clamp(colp[1].xyz,0.f.xxx,1.f.xxx),1.f);
+        gl_FragColor = vec4(to_sRGB(clamp(colp[1].xyz,0.f.xxx,1.f.xxx)),1.f);
     #endif
 }

@@ -157,6 +157,23 @@ vec3 defartu(in vec3 fartuSpace) {
 
 
 
+vec3 to_sRGB(in vec3 linear){
+    return pow(linear,1.f/2.2f.xxx);
+}
+
+vec3 to_linear(in vec3 sRGB){
+    return pow(sRGB,2.2f.xxx);
+}
+
+vec4 to_sRGB(in vec4 linear){
+    return vec4(to_sRGB(linear.xyz),linear.w);
+}
+
+vec4 to_linear(in vec4 sRGB){
+    return vec4(to_linear(sRGB.xyz),sRGB.w);
+}
+
+
 
 const vec4 CameraCenterView = vec4(0.f.xxx,1.f);
 

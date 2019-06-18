@@ -68,7 +68,7 @@ void main() {
     // 
     vparametric = ivec4(mc_Entity.xy,0.f.xx);
 	vlmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
-	vcolor = gl_Color;
+	vcolor = to_linear(gl_Color);
 
 	// 
     vec4 scrnSpace = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
@@ -149,16 +149,23 @@ void main() {
 
     validVoxel = validVoxel && vparametric[0].x > 0.f;
     validVoxel = validVoxel && vparametric[0].x != 85.f;
-    validVoxel = validVoxel && vparametric[0].x != 188.f;
-    validVoxel = validVoxel && vparametric[0].x != 189.f;
-    validVoxel = validVoxel && vparametric[0].x != 190.f;
-    validVoxel = validVoxel && vparametric[0].x != 191.f;
-    validVoxel = validVoxel && vparametric[0].x != 192.f;
     validVoxel = validVoxel && vparametric[0].x != 113.f;
     validVoxel = validVoxel && vparametric[0].x != 102.f;
     validVoxel = validVoxel && vparametric[0].x != 160.f;
     validVoxel = validVoxel && vparametric[0].x != 50.f;
     validVoxel = validVoxel && vparametric[0].x != 76.f;
+    validVoxel = validVoxel && vparametric[0].x != 107.f;
+    
+    validVoxel = validVoxel && vparametric[0].x != 183.f;
+    validVoxel = validVoxel && vparametric[0].x != 184.f;
+    validVoxel = validVoxel && vparametric[0].x != 185.f;
+    validVoxel = validVoxel && vparametric[0].x != 186.f;
+    validVoxel = validVoxel && vparametric[0].x != 187.f;
+    validVoxel = validVoxel && vparametric[0].x != 188.f;
+    validVoxel = validVoxel && vparametric[0].x != 189.f;
+    validVoxel = validVoxel && vparametric[0].x != 190.f;
+    validVoxel = validVoxel && vparametric[0].x != 191.f;
+    validVoxel = validVoxel && vparametric[0].x != 192.f;
 
     if (validVoxel) {
         for (int i = 0; i < 3; i++) {
@@ -179,7 +186,7 @@ void main() {
             // 
             const vec3 ntile = vec3(offsetOfVoxel.x+fft.x,offsetOfVoxel.y,offsetOfVoxel.z+fft.z);
             const vec3 ttile = (ntile+32.f)*vec3(2.f,1.f,2.f);
-            vertex.xyz = vec3(VoxelToTextureSpace(ttile).xy,0.f); // 
+            vertex.xyz = vec3(VoxelToTextureSpace(ttile).xy,(centerOfTriangle.y+32.f)/64.f); // 
 
             // integrity normal 
             fnormal *= shadowModelViewInverse, ftangent *= shadowModelViewInverse;
@@ -224,7 +231,7 @@ void main() {
 	}
 
 	//vec4 fcolor = fcolor;
-    vec4  color = texture(tex, adjtx.st) * texture(lightmap, flmcoord.st) * fcolor;
+    vec4  color = to_linear(texture(tex, adjtx.st)) * to_linear(texture(lightmap, flmcoord.st)) * fcolor;
     float alpha = color.w, alpas = random(vec4(vpos.xyz,frameTimeCounter))<alpha ? 1.f : 0.f; 
 	//color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
 
@@ -241,7 +248,7 @@ void main() {
             // voxel can store only 8-bit color... 
             const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
             //const vec3 ap3cp = pack3x2(mat2x3(vec3(torig/atlas,0.f),vec3(1.f-color.xyz*texture(lightmap,flmcoord.st).xyz)));
-			if (qwap == 0) gl_FragData[0] = vec4(1.f-fcolor.xyz*texture(lightmap, flmcoord.st).xyz,1.f); // try to pack into one voxel
+			if (qwap == 0) gl_FragData[0] = vec4(1.f-fcolor.xyz*to_linear(texture(lightmap, flmcoord.st).xyz),1.f); // try to pack into one voxel
             if (qwap == 1) gl_FragData[0] = vec4(torig/255.f,0.f,1.f);
 		} else {
 			gl_FragData[0] = vec4(color); // packing is useless 

@@ -71,7 +71,7 @@ void main() {
 	//
 	vparametric = ivec4(mc_Entity.xy,0.f.xx);
 	vlmcoord = gl_TextureMatrix[1] * gl_MultiTexCoord1;
-	vcolor = gl_Color;
+	vcolor = to_linear(gl_Color);
 
 	// 
 	vec4 scrnSpace = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
@@ -124,7 +124,7 @@ void main() {
 	}
 
 	// Color: Putler Edition 
-	vec4 color = texture(tex, adjtx.st) * texture(lightmap, flmcoord.st) * fcolor;
+	vec4 color = to_linear(texture(tex, adjtx.st)) * to_linear(texture(lightmap, flmcoord.st)) * fcolor;
 	//color.xyz *= color.w;
 	color.w = sqrt(color.w);
 	color.xyz *= color.w;
@@ -154,7 +154,7 @@ void main() {
 #endif
 		if (deferred) {
 			const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas); // Holy Star Wars!
-			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz*texture(lightmap, flmcoord.st).xyz)),alpas);
+			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz*to_linear(texture(lightmap, flmcoord.st).xyz))),alpas);
 			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);
 			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(torig.xy,0.f),tangent.xyz*0.5f+0.5f)),alpas);
 			gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);

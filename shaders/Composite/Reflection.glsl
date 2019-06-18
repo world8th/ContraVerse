@@ -12,6 +12,8 @@ uniform ivec2 atlasSize;
 
 const float nshift = 0.0001f;
 
+#define ENABLE_REFLECTIONS
+
 void main(){
     #ifdef VSH
         texcoord = gl_MultiTexCoord0;
@@ -46,7 +48,7 @@ void main(){
 #ifdef ENABLE_REFLECTIONS
         if (filled >= 0.1f) {
             // Screen Space Reflection Tracing...
-            const vec4 ssrPos = EfficientSSR(cameraSPosition.xyz+cameraCenter.xyz+normalize(cameraNormal.xyz)*0.001f,normalize(reflect(cameraVector.xyz,cameraNormal.xyz)));
+            const vec4 ssrPos = EfficientSSR(cameraSPosition.xyz+cameraCenter.xyz+normalize(cameraNormal.xyz)*nshift,normalize(reflect(cameraVector.xyz,cameraNormal.xyz)));
             const vec4 cps = texelFetch(colortex0,ivec2(((ssrPos.xy*0.5f+0.5f)*vec2(0.5f,1.f))*textureSize(colortex0,0)),0).xyzw;
             vec4 ssrl = vec4(unpack3x2(cps.xyz)[1],cps.w);
             
@@ -59,7 +61,7 @@ void main(){
             const vec3 reflV = normalize(modelRefl.xyz-modelPosition.xyz);
             const vec4 subPos = CameraSpaceToModelSpace(vec4(sunPosition.xyz,1.f));
 
-            freflc.xyz = atmosphere(
+            freflc.xyz = to_linear(atmosphere(
                 reflV.xyz,                                            // normalized ray direction
                 (modelPosition.xyz-modelCenter.xyz)+vec3(0.f,6372e3f,0.f),  // planet position
                 subPos.xyz,                                                 // position of the sun
@@ -71,12 +73,24 @@ void main(){
                 8e3f,                                            // Rayleigh scale height
                 1.2e3f,                                          // Mie scale height
                 0.758f                                           // Mie preferred scattering direction
-            ).xyz;
+            ).xyz);
 
-            Voxel voxelData = TraceVoxel(modelPosition.xyz+modelCenter.xyz+normalize(modelNormal.xyz)*nshift,reflV);
+            float vxgiDist = 10000.f, sslrDist = 0.f;
+
+            vec3 modpos = modelPosition.xyz+modelCenter.xyz;
+            const float bkheight = fract(modpos.xyz*0.5f+fract(cameraPosition.xyz)).y;
+            const float waterfix = bkheight>0.5f && bkheight<1.f ? 0.25f : 0.f;
+
+            {
+                const vec3 wpf = CameraSpaceToModelSpace(ScreenSpaceToCameraSpace(vec4(ssrPos.xyz,1.f))).xyz;
+                sslrDist = distance(wpf.xyz,modpos)*0.5f-nshift;
+                modpos += normalize(modelNormal.xyz)*(nshift+waterfix);
+            };
+            Voxel voxelData = TraceVoxel(modpos,reflV);
+            
+
             if (any(greaterThan(voxelData.color.xyz,0.f.xxx))) {
-                vec3 modelPosition = (modelPosition.xyz+modelCenter.xyz)*0.5f+fract(cameraPosition.xyz);
-
+                const vec3 modelPosition = modpos*0.5f+fract(cameraPosition.xyz);
                 const vec3 bmin = voxelData.position.xyz-(0.0f+nshift), bmax = voxelData.position.xyz+(1.0f+nshift);
                 const vec2 tbox = intersect(modelPosition, normalize(reflV), bmin, bmax);
 
@@ -85,7 +99,7 @@ void main(){
                     const vec2 atlas = tsize/TEXTURE_SIZE, atlasInv = TEXTURE_SIZE/tsize;
                     const vec2 anch = voxelData.tbase.xy*255.f;
 
-                    vec3 bsect = (modelPosition.xyz+normalize(reflV)*max(tbox.x,0.f))-bmin;
+                    vec3 bsect = (modelPosition.xyz+normalize(reflV)*max(tbox.x>=0.f?tbox.x:tbox.y,0.f))-bmin;
                     vec3 isect = clamp(bsect/(1.0f+nshift*2.f),0.f,1.f);
                     vec3 nvbox = clamp(bsect/(1.0f+nshift*2.f),0.f,1.f)*2.f-1.f;
                     
@@ -104,11 +118,15 @@ void main(){
                     const vec2 texcoord = (lcoord+anch)/atlas;
 
                     // Get Voxel Texture 
-                    if (any(greaterThan(voxelData.color.xyz,0.f.xxx))) freflc.xyz = voxelData.color.xyz*texture(colortex3,texcoord).xyz;//*voxelData.color.xyz;
+                    if (any(greaterThan(voxelData.color.xyz,0.f.xxx))) {
+                        vxgiDist = max(tbox.x>=0.f?tbox.x:tbox.y,0.f), freflc.xyz = voxelData.color.xyz*to_linear(texture(colortex3,texcoord).xyz);//*voxelData.color.xyz;
+                    };
                 };
+            };
 
-                // Apply SSLR reflection 
-                if (length(screenSpaceCorrect.xyz-ssrPos.xyz)>=0.001f) freflc.xyz = mix(freflc.xyz,ssrl.xyz,ssrl.w*ssrPos.w);
+            // Apply SSLR reflection 
+            if (length(screenSpaceCorrect.xyz-ssrPos.xyz)>=nshift && sslrDist<=vxgiDist) {
+                freflc.xyz = mix(freflc.xyz,ssrl.xyz,ssrl.w*ssrPos.w);
             };
 
             // Finalize Result

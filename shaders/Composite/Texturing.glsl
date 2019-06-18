@@ -45,7 +45,7 @@ void main(){
             // TODO: Parallax Occlusion Mapping in deferred phase... 
             
 
-            colp[1].xyz *= texture(colortex3,texcoord).xyz;
+            colp[1].xyz *= to_linear(texture(colortex3,texcoord).xyz);
         } else {
             
         }
@@ -60,7 +60,7 @@ void main(){
             const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
             const vec4 subPos = CameraSpaceToModelSpace(vec4(sunPosition.xyz,1.f));
 
-            colp[1] = atmosphere(
+            colp[1] = to_linear(atmosphere(
                 modelVector.xyz,                                            // normalized ray direction
                 (modelPosition.xyz-modelCenter.xyz)+vec3(0.f,6372e3f,0.f),  // planet position
                 subPos.xyz,                                                 // position of the sun
@@ -72,7 +72,7 @@ void main(){
                 8e3f,                                            // Rayleigh scale height
                 1.2e3f,                                          // Mie scale height
                 0.758f                                           // Mie preferred scattering direction
-            ).xyz, filled = 1.f;
+            ).xyz), filled = 1.f;
 
             //colp[1] = SkyBox(normalize(wPositionRelative.xyz)*1.f,normalize(wSunPosition.xyz)).xyz, filled = 1.f;
 

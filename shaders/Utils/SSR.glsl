@@ -29,23 +29,23 @@ vec4 EfficientSSR(in vec3 cameraSpaceOrigin, in vec3 cameraSpaceDirection){
 
     // 
     const vec2 screenSpaceDirSize = abs(screenSpaceDirection.xy*vec2(viewWidth*0.5f,viewHeight));
-    screenSpaceDirection.xyz /= max(screenSpaceDirSize.x,screenSpaceDirSize.y)*(1.f/32.f); // half of image size
+    screenSpaceDirection.xyz /= max(screenSpaceDirSize.x,screenSpaceDirSize.y)*(1.f/16.f); // half of image size
 
     // 
     vec4 finalOrigin = vec4(screenSpaceOrigin.xyz,0.f);
-    screenSpaceOrigin.xyz += screenSpaceDirection.xyz*0.125f;
-    for (int i=0;i<128;i++) { // do precise as possible 
+    screenSpaceOrigin.xyz += screenSpaceDirection.xyz*0.0625f;
+    for (int i=0;i<256;i++) { // do precise as possible 
         
         // check if origin gone from screen 
         if (any(lessThanEqual(screenSpaceOrigin.xyz,vec3(-1.f.xx,-0.1f))) || any(greaterThan(screenSpaceOrigin.xyz,vec3(1.f.xx,1.1f.x)))) { break; };
 
         // 
-        if ((GetDepthSSR(screenSpaceOrigin.xy)-0.0001f)<=screenSpaceOrigin.z) {
+        if ((GetDepthSSR(screenSpaceOrigin.xy)-1e-8f)<=screenSpaceOrigin.z) {
             vec3 screenSpaceOrigin = screenSpaceOrigin.xyz-screenSpaceDirection.xyz, screenSpaceDirection = screenSpaceDirection.xyz * 0.5f;
 
             // ray origin refinement
             for (int j=0;j<16;j++) {
-                if ((GetDepthSSR(screenSpaceOrigin.xy)-0.0001f)<=screenSpaceOrigin.z) {
+                if ((GetDepthSSR(screenSpaceOrigin.xy)-1e-8f)<=screenSpaceOrigin.z) {
                     screenSpaceOrigin -= screenSpaceDirection, screenSpaceDirection *= 0.5f;
                 } else {
                     screenSpaceOrigin += screenSpaceDirection;
@@ -67,7 +67,7 @@ vec4 EfficientSSR(in vec3 cameraSpaceOrigin, in vec3 cameraSpaceDirection){
         }
 
         // 
-        screenSpaceOrigin.xyz += screenSpaceDirection.xyz;
+        screenSpaceOrigin.xyz += screenSpaceDirection.xyz, screenSpaceDirection.xyz *= 1.f+(1.f/1024.f);
     }
 
     //

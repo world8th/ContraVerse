@@ -25,13 +25,15 @@ void main() {
         mat2x3 rtps = unpack3x2(texture(colortex2,fcoord.xy).xyz);
         mat2x3 rtph = unpack3x2(texture(colortex2,hcoord.xy).xyz);
 
+        const float reflc = 0.25f; // TODO: unify with reflection shader 
+
         //colp[1].xyz = modelNormal.xyz*0.5f+0.5f;
         if (fcoord.x < 0.5f && filled >= 0.1f) {
-            colp[1].xyz = mix(colp[1].xyz,rtps[1].xyz,0.5f); // reflections apply 
+            colp[1].xyz = mix(colp[1].xyz,rtps[1].xyz,reflc); // reflections apply 
         };
         
         if (dp >= dh && fcoord.x < 0.5f) {
-            colh[1].xyz = mix(colh[1].xyz,rtph[1].xyz,texture(colortex2,hcoord.xy).www*0.5f); // reflection in surfaces such as water 
+            colh[1].xyz = mix(colh[1].xyz,rtph[1].xyz,texture(colortex2,hcoord.xy).www*reflc); // reflection in surfaces such as water 
             colp[1].xyz = mix(colp[1].xyz,colh[1].xyz,texture(colortex0,hcoord.xy).www); // transparencies 
         };
 
