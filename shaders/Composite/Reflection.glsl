@@ -60,6 +60,8 @@ void main(){
             const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
             const vec3 reflV = normalize(modelRefl.xyz-modelPosition.xyz);
             const vec4 subPos = CameraSpaceToModelSpace(vec4(sunPosition.xyz,1.f));
+            const vec4 sbpPos = CameraSpaceToModelSpace(vec4(shadowLightPosition.xyz,1.f));
+            
 
             freflc.xyz = to_linear(atmosphere(
                 reflV.xyz,                                            // normalized ray direction
@@ -119,7 +121,20 @@ void main(){
 
                     // Get Voxel Texture 
                     if (any(greaterThan(voxelData.color.xyz,0.f.xxx))) {
-                        vxgiDist = max(tbox.x>=0.f?tbox.x:tbox.y,0.f), freflc.xyz = voxelData.color.xyz*to_linear(texture(colortex3,texcoord).xyz);//*voxelData.color.xyz;
+                        const vec3 modelNormal = normalize(floor(abs(nvbox)*1.000001f)*sign(nvbox));
+                        const vec3 mdk = bsect+bmin-modelNormal*nshift-fract(cameraPosition.xyz);
+
+                        const vec4 shadowPosition = ModelSpaceToShadowSpace(vec4(mdk,1.f));
+                        const vec2 shadowTexcoord = (shadowPosition.xy*0.5f+0.5f)*vec2(SHADOW_SIZE_RATE.x,1.f)+vec2(SHADOW_SHIFT.x,0.f);
+                        const float shadowTex = linShadow(shadowTexcoord).x*2.f-1.f;
+                        const float vibrance = (shadowTex.x-shadowPosition.z)+nshift-0.00001f;
+
+                        const float minShading = 0.1f;
+                        const float normalShading = minShading+(dot(modelNormal.xyz,normalize(sbpPos.xyz-mdk.xyz))*0.5f+0.5f)*2.f;
+
+                        vxgiDist = max(tbox.x>=0.f?tbox.x:tbox.y,0.f), 
+                        freflc.xyz = voxelData.color.xyz*to_linear(texture(colortex3,texcoord).xyz), //*voxelData.color.xyz;
+                        freflc.xyz *= vibrance>=0.00001 ? normalShading : minShading;
                     };
                 };
             };

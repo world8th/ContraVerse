@@ -126,6 +126,7 @@ uniform int frameCounter;
 uniform float frameTime;
 uniform float frameTimeCounter;
 uniform vec3 sunPosition;
+uniform vec3 shadowLightPosition;
 uniform int worldTime;
 
 //uniform vec3 sunAngle;
@@ -190,3 +191,24 @@ vec4 ModelSpaceToCameraSpace(in vec4 modelSpace){
 }
 
 
+vec4 ShadowSpaceToModelSpace(in vec4 shadowSpace){
+    vec4 modelSpaceProj = shadowModelViewInverse*shadowProjectionInverse*shadowSpace;
+    //modelSpaceProj.xyz = fartu(modelSpaceProj.xyz);
+    return modelSpaceProj/modelSpaceProj.w;
+}
+
+vec4 ModelSpaceToShadowSpace(in vec4 modelSpace){
+    //modelSpace.xyz = defartu(modelSpace.xyz);
+    vec4 shadowSpaceProj = shadowProjection*shadowModelView*modelSpace;
+    return shadowSpaceProj/shadowSpaceProj.w;
+}
+
+#if defined(FSH) && defined(COMPOSITE)
+float linShadow(in vec2 txy) {
+    const vec4 txl = textureGather(shadowtex0,txy,0);
+    const vec2 ttf = fract(txy*textureSize(shadowtex0,0)-0.5f);
+    const vec2 px = vec2(1.f-ttf.x,ttf.x), py = vec2(1.f-ttf.y,ttf.y);
+    const mat2x2 i2 = outerProduct(px,py);
+    return dot(txl,vec4(i2[0],i2[1]).zwyx); // interpolate
+}
+#endif

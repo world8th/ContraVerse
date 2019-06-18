@@ -5,8 +5,9 @@ gin vec4 texcoord;
 uniform ivec2 atlasSize;
 
 #ifdef FSH
-/* DRAWBUFFERS:01 */
+/* DRAWBUFFERS:0 */
 #endif
+
 
 
 void main(){
@@ -20,31 +21,46 @@ void main(){
     #ifdef FSH
         const vec2 fcoord = texcoord.xy;
         mat2x3 colp = unpack3x2(texture(gbuffers0,fcoord.xy).xyz);
+        mat2x3 ltps = unpack3x2(texture(gbuffers1,fcoord.xy).xyz);
         vec3 fcolor = colp[1], fdiffc = 0.f.xxx;
-
-
-        const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord*vec2(2.f,1.f)),2.0f.xx,-1.f.xx),  0.001f , 1.f);
-        const vec4 modelPosition = CameraSpaceToModelSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
-        const vec4 modelCenter = CameraSpaceToModelSpace(CameraCenterView);
-        const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
+        const float filled = texture(gbuffers0,fcoord.xy).w;
         
-        {
-            //Voxel voxel = TraceVoxel(wPosition.xyz,normalize(wPositionRelative.xyz));
-            //if (voxel.color.w > 0.f) fcolor = vec3(voxel.param.xy/65535.f,0.f);
 
+        const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,1.f)),2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
+        const vec4 cameraNormal = vec4(ltps[1].xyz*2.f-1.f,0.f);
+        const vec4 cameraSPosition = ScreenSpaceToCameraSpace(screenSpaceCorrect);
+        const vec4 cameraCenter = CameraCenterView;
+        const vec4 cameraVector = vec4(normalize(cameraSPosition.xyz-cameraCenter.xyz),0.f);
+        const vec3 reflVector = normalize(reflect(cameraVector.xyz,cameraNormal.xyz));
+        const vec3 reflOrigin = cameraSPosition.xyz + reflVector.xyz;
+
+        const vec4 modelNormal = cameraNormal*gbufferModelView;
+        const vec4 modelPosition = CameraSpaceToModelSpace(cameraSPosition);
+        const vec4 modelCenter = CameraSpaceToModelSpace(cameraCenter);
+        const vec4 modelRefl = CameraSpaceToModelSpace(vec4(reflOrigin,1.f));
+        const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
+        const vec3 reflV = normalize(modelRefl.xyz-modelPosition.xyz);
+        const vec4 subPos = CameraSpaceToModelSpace(vec4(shadowLightPosition.xyz,1.f));
+        
+        //(fcoord.x - contraSize.x) / SHADOW_SIZE.x;
+
+        const vec4 shadowPosition = ModelSpaceToShadowSpace(vec4((modelPosition.xyz+modelCenter.xyz)*0.5f,1.f));
+        const vec2 shadowTexcoord = (shadowPosition.xy*0.5f+0.5f)*vec2(SHADOW_SIZE_RATE.x,1.f)+vec2(SHADOW_SHIFT.x,0.f);
+        const float shadowTex = linShadow(shadowTexcoord).x*2.f-1.f;
+        const float vibrance = (shadowTex.x-shadowPosition.z)-0.00001f;
+
+        const float minShading = 0.1f;
+        const float normalShading = minShading+(dot(modelNormal.xyz,normalize(subPos.xyz-(modelPosition.xyz+modelCenter.xyz)))*0.5f+0.5f)*2.f;
+
+        if (filled > 0.1f) {
+            fcolor *= vibrance>=0.00001 ? normalShading : minShading;
             // Direct Light Phase...
-
-
-            // Voxel Space Trace Phase...
-
 
             // Additional Shadings... (micro-shading)
 
-
         }
         
-        colp[1] = fcolor;
         gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),fcolor)),texture(gbuffers1,fcoord.xy).w);
-        gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),fdiffc)),1.f);
+        //gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),fdiffc)),1.f);
     #endif
 }

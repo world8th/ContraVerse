@@ -25,7 +25,7 @@ void main() {
         mat2x3 rtps = unpack3x2(texture(colortex2,fcoord.xy).xyz);
         mat2x3 rtph = unpack3x2(texture(colortex2,hcoord.xy).xyz);
 
-        const float reflc = 0.25f; // TODO: unify with reflection shader 
+        const float reflc = 0.1f; // TODO: unify with reflection shader 
 
         //colp[1].xyz = modelNormal.xyz*0.5f+0.5f;
         if (fcoord.x < 0.5f && filled >= 0.1f) {

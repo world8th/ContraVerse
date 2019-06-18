@@ -72,7 +72,7 @@ void main(){
                 8e3f,                                            // Rayleigh scale height
                 1.2e3f,                                          // Mie scale height
                 0.758f                                           // Mie preferred scattering direction
-            ).xyz), filled = 1.f;
+            ).xyz);//, filled = 1.f;
 
             //colp[1] = SkyBox(normalize(wPositionRelative.xyz)*1.f,normalize(wSunPosition.xyz)).xyz, filled = 1.f;
 
