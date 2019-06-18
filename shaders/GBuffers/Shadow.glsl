@@ -145,6 +145,21 @@ void main() {
     if (FilterForVoxel(centerOfTriangle,normalOfTriangle)) validVoxel = true;
 
     // 
+    //if (validVoxel) {
+
+    validVoxel = validVoxel && vparametric[0].x > 0.f;
+    validVoxel = validVoxel && vparametric[0].x != 85.f;
+    validVoxel = validVoxel && vparametric[0].x != 188.f;
+    validVoxel = validVoxel && vparametric[0].x != 189.f;
+    validVoxel = validVoxel && vparametric[0].x != 190.f;
+    validVoxel = validVoxel && vparametric[0].x != 191.f;
+    validVoxel = validVoxel && vparametric[0].x != 192.f;
+    validVoxel = validVoxel && vparametric[0].x != 113.f;
+    validVoxel = validVoxel && vparametric[0].x != 102.f;
+    validVoxel = validVoxel && vparametric[0].x != 160.f;
+    validVoxel = validVoxel && vparametric[0].x != 50.f;
+    validVoxel = validVoxel && vparametric[0].x != 76.f;
+
     if (validVoxel) {
         for (int i = 0; i < 3; i++) {
             fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
@@ -226,8 +241,8 @@ void main() {
             // voxel can store only 8-bit color... 
             const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
             //const vec3 ap3cp = pack3x2(mat2x3(vec3(torig/atlas,0.f),vec3(1.f-color.xyz*texture(lightmap,flmcoord.st).xyz)));
-			if (qwap == 0) gl_FragData[0] = vec4(1.f-color.xyz,color.w); // try to pack into one voxel
-            if (qwap == 1) gl_FragData[1] = vec4(torig,0.f,1.f);
+			if (qwap == 0) gl_FragData[0] = vec4(1.f-fcolor.xyz*texture(lightmap, flmcoord.st).xyz,1.f); // try to pack into one voxel
+            if (qwap == 1) gl_FragData[0] = vec4(torig/255.f,0.f,1.f);
 		} else {
 			gl_FragData[0] = vec4(color); // packing is useless 
 		}

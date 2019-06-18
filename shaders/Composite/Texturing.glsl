@@ -36,8 +36,7 @@ void main(){
         if (mode == COORDINATED) {
             const vec2 tsize = textureSize(colortex3,0);
             const vec2 atlas = tsize/TEXTURE_SIZE, atlasInv = TEXTURE_SIZE/tsize;
-            const vec2 anch = floor(colp[0].xy);
-            const vec2 texcoord = fma(clamp(colp[0].xy-anch,0.f.xx,1.f.xx)+anch,atlasInv,round(texp[0].xy)*atlasInv);
+            const vec2 anch = floor(colp[0].xy), texcoord = fma(clamp(colp[0].xy-anch,0.f.xx,1.f.xx)+anch,atlasInv,round(texp[0].xy)*atlasInv);
 
             //texcoord *= TEXTURE_SIZE;
             //vec2 textile = floor(texcoord);

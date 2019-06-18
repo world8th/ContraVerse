@@ -1,4 +1,5 @@
 #include "/Globals/Header.glsl"
+#include "/Utils/Sky.glsl"
 
 gin vec4 texcoord;
 
@@ -8,6 +9,8 @@ uniform ivec2 atlasSize;
 /* DRAWBUFFERS:02 */
 #endif
 
+
+const float nshift = 0.0001f;
 
 void main(){
     #ifdef VSH
@@ -36,13 +39,16 @@ void main(){
         const vec3 reflVector = normalize(reflect(cameraVector.xyz,cameraNormal.xyz));
         const vec3 reflOrigin = cameraSPosition.xyz + reflVector.xyz;
 
-        vec3 fcolor = colp[1], freflc = 0.f.xxx;
-        if (fcoord.x < 0.5f && filled >= 0.1f) {
+        vec3 fcolor = colp[1], freflc = fcolor;
+        
+        // TODO: depth check for SSLR/Voxel reflection, and selective reflection, screen space sampling for Voxel reflections 
+
+#ifdef ENABLE_REFLECTIONS
+        if (filled >= 0.1f) {
             // Screen Space Reflection Tracing...
-            const vec4 ssrPos = EfficientSSR(cameraSPosition.xyz,normalize(reflect(cameraVector.xyz,cameraNormal.xyz)));
-            
-            const vec3 cps = texelFetch(colortex0,ivec2(((ssrPos.xy*0.5f+0.5f)*vec2(0.5f,1.f))*textureSize(colortex0,0)),0).xyz;
-            mat2x3 colp = unpack3x2(cps);
+            const vec4 ssrPos = EfficientSSR(cameraSPosition.xyz+cameraCenter.xyz+normalize(cameraNormal.xyz)*0.001f,normalize(reflect(cameraVector.xyz,cameraNormal.xyz)));
+            const vec4 cps = texelFetch(colortex0,ivec2(((ssrPos.xy*0.5f+0.5f)*vec2(0.5f,1.f))*textureSize(colortex0,0)),0).xyzw;
+            vec4 ssrl = vec4(unpack3x2(cps.xyz)[1],cps.w);
             
             // Voxel Space Reflection Tracing, Sampling and Shading... 
             const vec4 modelNormal = cameraNormal*gbufferModelView;
@@ -50,47 +56,68 @@ void main(){
             const vec4 modelCenter = CameraSpaceToModelSpace(cameraCenter);
             const vec4 modelRefl = CameraSpaceToModelSpace(vec4(reflOrigin,1.f));
             const vec4 modelVector = vec4(normalize(modelPosition.xyz-modelCenter.xyz),0.f);
-
-/*
             const vec3 reflV = normalize(modelRefl.xyz-modelPosition.xyz);
-            Voxel voxelData = TraceVoxel(modelPosition.xyz,reflV);
-            //const vec3 reflV = modelVector.xyz;
-            //Voxel voxelData = TraceVoxel(modelCenter.xyz,reflV);
-            if (fcoord.x < 0.5f && filled >= 0.1f && any(greaterThan(voxelData.color.xyz,0.f.xxx))) {
-                vec3 modelPosition = modelPosition.xyz+fract(cameraPosition.xyz);
-                const vec2 tbox = intersect(modelPosition, normalize(reflV), voxelData.position.xyz-0.5f, voxelData.position.xyz+0.5f);
+            const vec4 subPos = CameraSpaceToModelSpace(vec4(sunPosition.xyz,1.f));
 
-                //if (tbox.y >= tbox.x && tbox.y >= 0.f) {
-                    const vec3 isect = clamp((modelVector.xyz*max(tbox.x,0.f)+modelPosition.xyz)-(voxelData.position.xyz-0.5f),0.f.xxx,1.f.xxx);
+            freflc.xyz = atmosphere(
+                reflV.xyz,                                            // normalized ray direction
+                (modelPosition.xyz-modelCenter.xyz)+vec3(0.f,6372e3f,0.f),  // planet position
+                subPos.xyz,                                                 // position of the sun
+                40.0f,                                           // intensity of the sun
+                6371e3f,                                         // radius of the planet in meters
+                6471e3f,                                         // radius of the atmosphere in meters
+                vec3(5.5e-6, 13.0e-6, 22.4e-6),                  // Rayleigh scattering coefficient
+                21e-6f,                                          // Mie scattering coefficient
+                8e3f,                                            // Rayleigh scale height
+                1.2e3f,                                          // Mie scale height
+                0.758f                                           // Mie preferred scattering direction
+            ).xyz;
 
-                    // top and bottom texcoord 
-                    vec2 lcoord = isect.xz;
-                    
-                    // face texcoord 
-                    if (abs(isect.x) >= 0.9999f) lcoord = isect.yz;
-                    if (abs(isect.z) >= 0.9999f) lcoord = isect.xy;
+            Voxel voxelData = TraceVoxel(modelPosition.xyz+modelCenter.xyz+normalize(modelNormal.xyz)*nshift,reflV);
+            if (any(greaterThan(voxelData.color.xyz,0.f.xxx))) {
+                vec3 modelPosition = (modelPosition.xyz+modelCenter.xyz)*0.5f+fract(cameraPosition.xyz);
 
-                    // TOOD: texcoord rotation 
+                const vec3 bmin = voxelData.position.xyz-(0.0f+nshift), bmax = voxelData.position.xyz+(1.0f+nshift);
+                const vec2 tbox = intersect(modelPosition, normalize(reflV), bmin, bmax);
 
-                    // Get True Texcoord and Texture For Voxel 
+                if (tbox.y >= tbox.x && tbox.y >= 0.f) {
                     const vec2 tsize = textureSize(colortex3,0);
                     const vec2 atlas = tsize/TEXTURE_SIZE, atlasInv = TEXTURE_SIZE/tsize;
-                    const vec2 anch = voxelData.tbase.xy;
-                    const vec2 texcoord = (lcoord+anch)*atlasInv;
+                    const vec2 anch = voxelData.tbase.xy*255.f;
+
+                    vec3 bsect = (modelPosition.xyz+normalize(reflV)*max(tbox.x,0.f))-bmin;
+                    vec3 isect = clamp(bsect/(1.0f+nshift*2.f),0.f,1.f);
+                    vec3 nvbox = clamp(bsect/(1.0f+nshift*2.f),0.f,1.f)*2.f-1.f;
+                    
+
+                    // top and bottom texcoord 
+                    vec2 lcoord = isect.xz; lcoord.x = lcoord.x;
+                    
+                    // face texcoord 
+                    if ( abs(nvbox.x)>0.9999f ) { lcoord = isect.zy; lcoord.y = 1.f-lcoord.y; };
+                    if ( abs(nvbox.z)>0.9999f ) { lcoord = isect.xy; lcoord.y = 1.f-lcoord.y; };
+
+                    // 
+                    if ( -(nvbox.y) > 0.9999f ) lcoord.y = 1.f-lcoord.y;
+
+                    // Get True Texcoord and Texture For Voxel
+                    const vec2 texcoord = (lcoord+anch)/atlas;
 
                     // Get Voxel Texture 
-                    //colp[1].xyz = texture(colortex3,texcoord).xyz;
+                    if (any(greaterThan(voxelData.color.xyz,0.f.xxx))) freflc.xyz = voxelData.color.xyz*texture(colortex3,texcoord).xyz;//*voxelData.color.xyz;
+                };
 
-                    colp[1].xyz = voxelData.color.xyz;
-                //};
+                // Apply SSLR reflection 
+                if (length(screenSpaceCorrect.xyz-ssrPos.xyz)>=0.001f) freflc.xyz = mix(freflc.xyz,ssrl.xyz,ssrl.w*ssrPos.w);
             };
-*/
-            
 
             // Finalize Result
-            freflc = colp[1];
+            //freflc = colp[1];
+
+            //fcolor.xyz = cameraNormal.xyz*0.5f+0.5f;
         }
-        colp[1] = fcolor;
+#endif
+        
         gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),fcolor)),texture(gbuffers1,fcoord.xy).w);
         gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),freflc)),1.f);
     #endif

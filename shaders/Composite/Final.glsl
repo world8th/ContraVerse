@@ -15,7 +15,7 @@ void main() {
         const vec3 cps = texture(colortex0,fcoord.xy).xyz;
         mat2x3 colp = unpack3x2(cps);
         mat2x3 ltps = unpack3x2(texture(gbuffers1,fcoord.xy).xyz);
-        mat2x3 rtps = unpack3x2(texture(colortex2,fcoord.xy).xyz);
+        
 
         const float filled = texture(colortex0,fcoord.xy).w;
         const vec2 shadowsize = textureSize(shadowcolor0,0);
@@ -30,10 +30,7 @@ void main() {
 
 
 
-        //colp[1].xyz = modelNormal.xyz*0.5f+0.5f;
-        if (fcoord.x < 0.5f && filled >= 0.1f) {
-            colp[1].xyz = mix(colp[1].xyz,rtps[1].xyz,0.5f);
-        };
+
         gl_FragColor = vec4(clamp(colp[1].xyz,0.f.xxx,1.f.xxx),1.f);
     #endif
 }

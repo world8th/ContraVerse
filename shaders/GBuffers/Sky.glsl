@@ -85,7 +85,14 @@ void main() {
 
 #ifdef FSH
 
-	discard;
+	// 
+    gl_FragDepth = 1.f;//gl_FragCoord.z+2.1f;
+	gl_FragData[0] = vec4(0.f);
+	gl_FragData[1] = vec4(0.f);
+	gl_FragData[2] = vec4(0.f);
+	gl_FragData[3] = vec4(0.f);
+
+	//discard;
 
 	vec2 fcoord = gl_FragCoord.xy/vec2(viewWidth,viewHeight);
 	fcoord.x = fma(fcoord.x, 2.f, 0.f);
@@ -116,7 +123,8 @@ void main() {
 #endif
 	color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
 
-    gl_FragDepth = gl_FragCoord.z+2.1f;
+	// 
+    gl_FragDepth = 1.f;//gl_FragCoord.z+2.1f;
 	gl_FragData[0] = vec4(0.f);
 	gl_FragData[1] = vec4(0.f);
 	gl_FragData[2] = vec4(0.f);
@@ -124,10 +132,10 @@ void main() {
 
     float alpha = color.w, alpas = random(vpos.xyz)<alpha ? 1.f : 0.f; 
 	if ( all(greaterThanEqual(fcoord.xy,0.f.xx)) && all(lessThan(fcoord.xy,1.f.xx)) ) {
-		gl_FragDepth = gl_FragCoord.z + 1.f;
-        gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),color.xyz)),alpas);
-		gl_FragData[1] = vec4(0.f,0.f.xx,1.f);
-		gl_FragData[2] = vec4(0.f.xxx,1.f);
+		//gl_FragDepth = 1.f;//gl_FragCoord.z + 1.f;
+        //gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),color.xyz)),alpas);
+		//gl_FragData[1] = vec4(0.f,0.f.xx,1.f);
+		//gl_FragData[2] = vec4(0.f.xxx,1.f);
 	}
 
 #endif

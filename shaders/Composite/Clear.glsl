@@ -19,6 +19,7 @@ void main(){
     #ifdef FSH
         vec2 fcoord = texcoord.xy;
         // clear some gbuffers images before render-passes
+        gl_FragDepth = 1.f;
         gl_FragData[0] = vec4(0.f);
         gl_FragData[1] = vec4(0.f);//texture(gbuffers1,fcoord.xy);//vec4(0.f);
         gl_FragData[2] = vec4(0.f);

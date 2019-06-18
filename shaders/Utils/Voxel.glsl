@@ -81,7 +81,7 @@ Voxel VoxelContents(in vec3 tileSpace){
         const vec4 txpl = texelFetch(shadowcolor0, ivec2(VoxelToTextureSpace(tileSpace).xy)+ivec2(1,0), 0);
         //const mat2x3 colp = unpack3x2(voxy.xyz);
 
-        voxelData.position = tileSpace-aeraSize.xxx*0.5f;
+        voxelData.position = tileSpace-aeraSize.xxx*0.5f;//*0.5f;
         voxelData.color = 1.f-voxy.xyz;//1.f-colp[1].xyz;
         voxelData.tbase = txpl.xy;//colp[0].xy;
         voxelData.param = 0u;//floatBitsToUint(voxy.w);
@@ -121,7 +121,7 @@ Voxel TraceVoxel(in vec3 p0, in vec3 d){
     finalVoxel.param = 0u;
 
     const vec3 op = p0;
-    p0 += aeraSize*0.5f + fract(cameraPosition);
+    p0 = p0*0.5f + aeraSize*0.5f + fract(cameraPosition);
 
     const vec2 tbox = intersect(p0, d, 0.f.xxx-0.0001f, aeraSize+0.0001f);
     if (tbox.y >= tbox.x && tbox.y >= 0.f) { p0 += d*max(tbox.x,0.f);
