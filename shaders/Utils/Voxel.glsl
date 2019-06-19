@@ -61,7 +61,7 @@ vec3 NormalOfTriangle(in mat3 vertices){
 struct Voxel {
     vec3 position; uint param;
     vec3 color;
-    vec2 tbase;
+    vec2 tbase; vec2 lmcoord;
 };
 
 #ifndef TEXTURE_SIZE
@@ -79,12 +79,14 @@ Voxel VoxelContents(in vec3 tileSpace){
     if (all(greaterThanEqual(tileSpace,0.f.xxx)) && all(lessThan(tileSpace,aeraSize))) {
         const vec4 voxy = texelFetch(shadowcolor0, ivec2(VoxelToTextureSpace(tileSpace).xy)+ivec2(0,0), 0);
         const vec4 txpl = texelFetch(shadowcolor0, ivec2(VoxelToTextureSpace(tileSpace).xy)+ivec2(1,0), 0);
+        const vec4 lxpl = texelFetch(shadowcolor0, ivec2(VoxelToTextureSpace(tileSpace).xy)+ivec2(0,1), 0);
         //const mat2x3 colp = unpack3x2(voxy.xyz);
 
         voxelData.position = tileSpace-aeraSize.xxx*0.5f;//*0.5f;
         voxelData.color = 1.f-voxy.xyz;//1.f-colp[1].xyz;
         voxelData.tbase = txpl.xy;//colp[0].xy;
         voxelData.param = 0u;//floatBitsToUint(voxy.w);
+        voxelData.lmcoord = lxpl.xy;
         if (voxy.w < 1.f) voxelData.color = 0.f.xxx;
         
         //if (all(lessThanEqual(voxelData.color,0.f.xxx))) {

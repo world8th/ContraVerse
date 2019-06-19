@@ -1,12 +1,13 @@
 #include "/Globals/Header.glsl"
 #include "/Utils/Sky.glsl"
 
+
 gin vec4 texcoord;
 
 uniform ivec2 atlasSize;
 
 #ifdef FSH
-/* DRAWBUFFERS:02 */
+/* DRAWBUFFERS:01 */
 #endif
 
 
@@ -14,41 +15,50 @@ const float nshift = 0.0001f;
 
 #define ENABLE_REFLECTIONS
 
-void main(){
+void main() {
     #ifdef VSH
         texcoord = gl_MultiTexCoord0;
         gl_Position = ftransform();
     #endif
     #ifdef GSH 
-        
+
     #endif
     #ifdef FSH
         const vec2 fcoord = texcoord.xy;
         const vec3 cps = texture(colortex0,fcoord.xy).xyz;
         mat2x3 colp = unpack3x2(cps);
+        mat2x3 enrg = unpack3x2(texture(colortex1,fcoord.xy).xyz);
         mat2x3 ltps = unpack3x2(texture(gbuffers1,fcoord.xy).xyz);
+        mat2x3 texp = unpack3x2(texture(gbuffers2,fcoord.xy).xyz);
+        //mat2x3 relp = unpack3x2(texture(gbuffers3,fcoord.xy).xyz);
+
 
         const float filled = texture(colortex0,fcoord.xy).w;
         const vec2 shadowsize = textureSize(shadowcolor0,0);
         const vec2 buffersize = textureSize(colortex0,0);
 
         const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,1.f)),2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
-        const vec4 cameraNormal = vec4(ltps[1].xyz*2.f-1.f,0.f);
+        const vec4 cameraNormal = vec4(texp[1].xyz*2.f-1.f,0.f);
         const vec4 cameraSPosition = ScreenSpaceToCameraSpace(screenSpaceCorrect);
         const vec4 cameraCenter = CameraCenterView;
-        const vec4 cameraVector = vec4(normalize(cameraSPosition.xyz),0.f);
-        const vec3 reflVector = normalize(reflect(cameraVector.xyz,cameraNormal.xyz));
+        const vec4 cameraVector = vec4(normalize(cameraSPosition.xyz-cameraCenter.xyz),0.f);
+        vec3 reflVector = normalize(reflect(cameraVector.xyz,cameraNormal.xyz));
         const vec3 reflOrigin = cameraSPosition.xyz + cameraCenter.xyz + reflVector.xyz;
 
 
-        vec3 fcolor = colp[1], freflc = fcolor;
-#ifdef ENABLE_REFLECTIONS
+        //reflVector.xyz = 
+        //texp
+
+
+        vec3 fenergy = enrg[1];
+        vec3 fcolor = colp[1], freflc = 0.f.xxx;//fcolor;
+    #ifdef ENABLE_REFLECTIONS
         if (filled >= 0.1f) {
             // Screen Space Reflection Tracing...
-            const vec4 ssrPos = EfficientSSR(cameraSPosition.xyz+cameraCenter.xyz+normalize(cameraNormal.xyz)*nshift,reflVector);
+            const vec4 ssrPos = EfficientSSR(cameraSPosition.xyz+normalize(cameraNormal.xyz)*nshift,reflVector);
             const vec4 cps = texelFetch(colortex0,ivec2(((ssrPos.xy*0.5f+0.5f)*vec2(0.5f,1.f))*textureSize(colortex0,0)),0).xyzw;
             vec4 ssrl = vec4(unpack3x2(cps.xyz)[1],cps.w);
-            
+
             // Voxel Space Reflection Tracing, Sampling and Shading... 
             const vec4 modelNormal = cameraNormal*gbufferModelView;
             const vec4 modelSPosition = CameraSpaceToModelSpace(cameraSPosition);
@@ -59,7 +69,7 @@ void main(){
             const vec3 reflV = normalize(modelRefl.xyz-modelPosition.xyz+modelCenter.xyz);
             const vec4 subPos = CameraSpaceToModelSpace(vec4(sunPosition.xyz,1.f));
             const vec4 sbpPos = CameraSpaceToModelSpace(vec4(shadowLightPosition.xyz,1.f));
-            
+
 
             freflc.xyz = to_linear(atmosphere(
                 reflV.xyz,                                            // normalized ray direction
@@ -73,10 +83,10 @@ void main(){
                 8e3f,                                            // Rayleigh scale height
                 1.2e3f,                                          // Mie scale height
                 0.758f                                           // Mie preferred scattering direction
-            ).xyz);
+            ).xyz)*fenergy;
 
             float vxgiDist = 10000.f;
-            
+
             const float bkheight = fract(modelPosition+fract(cameraPosition.xyz)).y;
             const float waterfix = bkheight>0.5f && bkheight<1.f ? 0.125f : 0.f;
             const vec3 wpf = CameraSpaceToModelSpace(ScreenSpaceToCameraSpace(vec4(ssrPos.xyz,1.f))).xyz;
@@ -121,11 +131,11 @@ void main(){
                         const float shadowTex = linShadow(shadowTexcoord).x*2.f-1.f;
                         const float vibrance = (shadowTex.x-shadowPosition.z)+nshift-0.00001f;
 
-                        const float minShading = 0.1f;
-                        const float normalShading = minShading+(dot(modelNormal.xyz,normalize(sbpPos.xyz-mdk.xyz))*0.5f+0.5f)*2.f;
+                        const float minShading = voxelData.lmcoord.x>=0.905f ? 16.f : 0.f; //ltps[0].x;
+                        const float normalShading = minShading+(dot(modelNormal.xyz,normalize(subPos.xyz-modelPosition.xyz))*0.5f+0.5f)*clamp(2.f-minShading,0.f,2.f);
 
                         vxgiDist = max(tbox.x>=0.f?tbox.x:tbox.y,0.f), 
-                        freflc.xyz = voxelData.color.xyz*to_linear(texture(colortex3,texcoord).xyz), //*voxelData.color.xyz;
+                        freflc.xyz = fenergy*voxelData.color.xyz*to_linear(texture(colortex3,texcoord).xyz), //*voxelData.color.xyz;
                         freflc.xyz *= vibrance>=0.00001 ? normalShading : minShading;
                     };
                 };
@@ -133,7 +143,7 @@ void main(){
 
             // Apply SSLR reflection 
             if (length(screenSpaceCorrect.xyz-ssrPos.xyz)>=nshift && sslrDist<=vxgiDist) {
-                freflc.xyz = mix(freflc.xyz,ssrl.xyz,ssrl.w*ssrPos.w);
+                freflc.xyz = mix(freflc.xyz,ssrl.xyz*fenergy,ssrl.w*ssrPos.w);
             };
 
             // Finalize Result
@@ -141,8 +151,8 @@ void main(){
 
             //fcolor.xyz = cameraNormal.xyz*0.5f+0.5f;
         }
-#endif
-        
+    #endif
+
         gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),fcolor)),texture(gbuffers1,fcoord.xy).w);
         gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),freflc)),1.f);
     #endif

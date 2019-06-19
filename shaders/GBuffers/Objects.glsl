@@ -46,6 +46,8 @@ layout(triangle_strip, max_vertices = 3) out;
 #ifdef FSH
 uniform sampler2D tex;
 uniform sampler2D lightmap;
+uniform sampler2D normals;
+uniform sampler2D specular;
 uniform ivec2 atlasSize;
 #ifndef TEXTURE_SIZE
 #define TEXTURE_SIZE 16
@@ -107,6 +109,15 @@ void main() {
     const vec4 tnormal = fnormal; // TODO: modify normals for transparents
 	const vec4 tangent = ftangent;
 
+	// TBN
+	const vec3 pbrspc =                texture(specular, adjtx.st).xyz;
+	const vec3 hemisphere = randomHemisphereCosine(vec3(fcoord.xy*vec2(viewWidth,viewHeight),frameTimeCounter));
+
+	mat3 tbn = mat3(normalize(tangent.xyz),normalize(cross(tnormal.xyz,tangent.xyz)),normalize(tnormal.xyz));
+	vec3 tbnorm = normalize(tbn*(texture(normals , adjtx.st).xyz*2.f-1.f));
+	tbn[2] = tbnorm, tbn[1] = normalize(cross(tbn[2],tbn[0]));
+	tbnorm = normalize(tbn*hemisphere);
+
 	// Yob'Apple Face ID
 #if defined(TERRAIN) || defined(BLOCK) || defined(WATER)
 	const bool facing = dot(normalize(vpos.xyz),normalize(tnormal.xyz))<=0.f;
@@ -124,7 +135,13 @@ void main() {
 	}
 
 	// Color: Putler Edition 
-	vec4 color = to_linear(texture(tex, adjtx.st)) * to_linear(texture(lightmap, flmcoord.st)) * fcolor;
+	//vec4 emission = 1.f.xxxx;//to_linear(texture(lightmap, flmcoord.st));
+	vec4 emission = flmcoord.x>=0.90f ? to_linear(texture(lightmap, flmcoord.st))*2.f : 1.f.xxxx;
+	vec4 color = to_linear(texture(tex, adjtx.st)) * emission * fcolor;
+
+	//if (flmcoord.s > 0.0f) emission.xyz *= 1.f + 19.f*(flmcoord.s*(1.f-flmcoord.t));
+	//if (flmcoord.s > 0.9f) emission.xyz *= 20.f;
+
 	//color.xyz *= color.w;
 	color.w = sqrt(color.w);
 	color.xyz *= color.w;
@@ -154,14 +171,14 @@ void main() {
 #endif
 		if (deferred) {
 			const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas); // Holy Star Wars!
-			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz*to_linear(texture(lightmap, flmcoord.st).xyz))),alpas);
+			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz*emission.xyz)),alpas);
 			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);
-			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(torig.xy,0.f),tangent.xyz*0.5f+0.5f)),alpas);
+			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(torig.xy/atlas,0.f),tangent.xyz*0.5f+0.5f)),alpas);
 			gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);
 		} else {
 			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),color.xyz)),alpas);
 			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);
-			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);
+			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(pbrspc.yz,0.f),tbnorm.xyz*0.5f+0.5f)),alpas);
 			gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);
 		}
     }

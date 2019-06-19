@@ -6,7 +6,7 @@ gin vec4 texcoord;
 uniform ivec2 atlasSize;
 
 #ifdef FSH
-/* DRAWBUFFERS:4 */
+/* DRAWBUFFERS:46 */
 #endif
 
 const int PRETEXTURED = 0, COORDINATED = 1;
@@ -22,29 +22,40 @@ void main(){
         gl_Position = ftransform();
     #endif
     #ifdef GSH 
-        
+
     #endif
     #ifdef FSH
         const vec2 fcoord = texcoord.xy;// * vec2(0.5f,1.f);
         mat2x3 colp = unpack3x2(texture(gbuffers0,fcoord.xy).xyz);
         mat2x3 ltps = unpack3x2(texture(gbuffers1,fcoord.xy).xyz);
         mat2x3 texp = unpack3x2(texture(gbuffers2,fcoord.xy).xyz);
-        mat2x3 tang = unpack3x2(texture(gbuffers3,fcoord.xy).xyz);
+        //mat2x3 tang = unpack3x2(texture(gbuffers3,fcoord.xy).xyz);
         const int mode = !all(equal(colp[0].xy,0.f.xx)) ? COORDINATED : PRETEXTURED;
 
         // special edition
         if (mode == COORDINATED) {
             const vec2 tsize = textureSize(colortex3,0);
             const vec2 atlas = tsize/TEXTURE_SIZE, atlasInv = TEXTURE_SIZE/tsize;
-            const vec2 anch = floor(colp[0].xy), texcoord = fma(clamp(colp[0].xy-anch,0.f.xx,1.f.xx)+anch,atlasInv,round(texp[0].xy)*atlasInv);
+            const vec2 anch = floor(colp[0].xy), texcoord = fma(clamp(colp[0].xy-anch,0.f.xx,1.f.xx)+anch,atlasInv,round(texp[0].xy*atlas)*atlasInv);
 
             //texcoord *= TEXTURE_SIZE;
             //vec2 textile = floor(texcoord);
             //vec2 texofft = fract(texcoord);
 
             // TODO: Parallax Occlusion Mapping in deferred phase... 
+            mat3 tbn = mat3(normalize(texp[1].xyz*2.f-1.f),normalize(cross(ltps[1].xyz*2.f-1.f,texp[1].xyz*2.f-1.f)),normalize(ltps[1].xyz*2.f-1.f));
+	        vec3 tbnorm = normalize(tbn*(texture(colortex1, texcoord).xyz*2.f-1.f));
+
+            // hemisphere 
+            const vec3 hemisphere = randomHemisphereCosine(vec3(fcoord.xy*vec2(viewWidth,viewHeight),frameTimeCounter));
+            tbn[2] = tbnorm, tbn[1] = normalize(cross(tbn[2],tbn[0]));
+            tbnorm = normalize(tbn*hemisphere);
+
+	        const vec3 pbrspc = texture(colortex2, texcoord).xyz;
+
             
 
+            texp[1].xyz = tbnorm.xyz*0.5f+0.5f, texp[0].xy = pbrspc.yz;
             colp[1].xyz *= to_linear(texture(colortex3,texcoord).xyz);
         } else {
             
@@ -58,7 +69,7 @@ void main(){
             const vec4 cameraNormal = vec4(ltps[1].xyz*2.f-1.f,0.f);
             const vec4 cameraSPosition = ScreenSpaceToCameraSpace(screenSpaceCorrect);
             const vec4 cameraCenter = CameraCenterView;
-            const vec4 cameraVector = vec4(normalize(cameraSPosition.xyz),0.f);
+            const vec4 cameraVector = vec4(normalize(cameraSPosition.xyz-cameraCenter.xyz),0.f);
             const vec3 reflVector = normalize(reflect(cameraVector.xyz,cameraNormal.xyz));
             const vec3 reflOrigin = cameraSPosition.xyz + cameraCenter.xyz + reflVector.xyz;
 
@@ -92,5 +103,6 @@ void main(){
 
         // send modified color 
         gl_FragData[0] = vec4(pack3x2(colp),filled);
+        gl_FragData[1] = vec4(pack3x2(texp),texture(gbuffers2,fcoord.xy).w);
     #endif
 }

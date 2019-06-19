@@ -231,7 +231,11 @@ void main() {
 	}
 
 	//vec4 fcolor = fcolor;
-    vec4  color = to_linear(texture(tex, adjtx.st)) * to_linear(texture(lightmap, flmcoord.st)) * fcolor;
+    //vec4 emission = to_linear(texture(lightmap, flmcoord.st));
+    vec4 emission = flmcoord.x>=0.90f ? to_linear(texture(lightmap, flmcoord.st))*2.f : 1.f.xxxx;//1.f.xxxx;
+    //if (flmcoord.s > 0.9f) emission.xyz *= 20.f;
+
+    vec4  color = to_linear(texture(tex, adjtx.st)) * emission * fcolor;
     float alpha = color.w, alpas = random(vec4(vpos.xyz,frameTimeCounter))<alpha ? 1.f : 0.f; 
 	//color.xyz = mix(gl_Fog.color.xyz,color.xyz,fogFactor);
 
@@ -248,8 +252,9 @@ void main() {
             // voxel can store only 8-bit color... 
             const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas);
             //const vec3 ap3cp = pack3x2(mat2x3(vec3(torig/atlas,0.f),vec3(1.f-color.xyz*texture(lightmap,flmcoord.st).xyz)));
-			if (qwap == 0) gl_FragData[0] = vec4(1.f-fcolor.xyz*to_linear(texture(lightmap, flmcoord.st).xyz),1.f); // try to pack into one voxel
+			if (qwap == 0) gl_FragData[0] = vec4(1.f-fcolor.xyz*emission.xyz,1.f); // try to pack into one voxel
             if (qwap == 1) gl_FragData[0] = vec4(torig/255.f,0.f,1.f);
+            if (qwap == 2) gl_FragData[0] = vec4(flmcoord.st,0.f,1.f);
 		} else {
 			gl_FragData[0] = vec4(color); // packing is useless 
 		}
