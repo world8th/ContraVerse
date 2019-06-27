@@ -232,7 +232,8 @@ void main() {
 
 	//vec4 fcolor = fcolor;
     //vec4 emission = to_linear(texture(lightmap, flmcoord.st));
-    vec4 emission = flmcoord.x>=0.90f ? to_linear(texture(lightmap, flmcoord.st))*2.f : 1.f.xxxx;//1.f.xxxx;
+    const bool isEmission = flmcoord.x>=0.90f;
+    vec4 emission = isEmission ? to_linear(texture(lightmap, flmcoord.st))*1.f : 1.f.xxxx;//1.f.xxxx;
     //if (flmcoord.s > 0.9f) emission.xyz *= 20.f;
 
     vec4  color = to_linear(texture(tex, adjtx.st)) * emission * fcolor;

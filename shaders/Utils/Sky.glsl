@@ -1,5 +1,5 @@
 
-const float PI = 3.141592;
+//const float PI = 3.141592;
 const int iSteps = 16;
 const int jSteps = 8;
 

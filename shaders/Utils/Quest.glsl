@@ -28,8 +28,32 @@ float random( in vec3  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 float random( in vec4  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 
 
+
+
+#ifdef EXPERIMENTAL_UNORM16_DIRECTION
+#define dirtype_t float
+#define dirtype_t_decode(f) unpackUnorm2x16(floatBitsToUint(f)).yx
+#define dirtype_t_encode(f) uintBitsToFloat(packUnorm2x16(f.yx))
+#else
+#define dirtype_t uvec2
+#define dirtype_t_decode(f) uintBitsToFloat(f)
+#define dirtype_t_encode(f) floatBitsToUint(f)
+#endif
+
+
+const float INV_TWO_PI = 1.f/3.141592f;
+const float TWO_PI = 2.f * 3.141592f;
+const float PI = 3.141592f;
+const float INV_PI = 1.f/3.141592f;
+
+dirtype_t lcts(in vec3 direct) { return dirtype_t_encode(vec2(fma(atan(direct.z,direct.x),INV_TWO_PI,0.5f),acos(-direct.y)*INV_PI)); };
+     vec3 dcts(in vec2 hr) { hr = fma(hr,vec2(TWO_PI,PI),vec2(-PI,0.f)); const float up=-cos(hr.y),over=sqrt(fma(up,-up,1.f)); return vec3(cos(hr.x)*over,up,sin(hr.x)*over); };
+     vec3 dcts(in dirtype_t hr) { return dcts(dirtype_t_decode(hr)); };
+
 vec3 randomHemisphereCosine(in vec3 seeds) {
     const vec2 hmsm = vec2(halfConstruct(hash(floatBitsToUint(seeds))));
-    const float phi = hmsm.x * 2.f * 3.141592f, up = sqrt(1.0f - hmsm.y), over = sqrt(fma(up,-up,1.f));
+    const float phi = hmsm.x * TWO_PI, up = sqrt(1.0f - hmsm.y), over = sqrt(fma(up,-up,1.f));
     return vec3(cos(phi)*over, up, sin(phi)*over);
 }
+
+vec3 randomSphere(in vec3 seeds) { return dcts(halfConstruct(hash(floatBitsToUint(seeds)))); };

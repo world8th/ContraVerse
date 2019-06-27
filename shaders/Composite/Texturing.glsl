@@ -46,11 +46,14 @@ void main(){
             mat3 tbn = mat3(normalize(texp[1].xyz*2.f-1.f),normalize(cross(ltps[1].xyz*2.f-1.f,texp[1].xyz*2.f-1.f)),normalize(ltps[1].xyz*2.f-1.f));
 	        vec3 tbnorm = normalize(tbn*(texture(colortex1, texcoord).xyz*2.f-1.f));
 
-            // hemisphere 
-            const vec3 hemisphere = randomHemisphereCosine(vec3(fcoord.xy*vec2(viewWidth,viewHeight),frameTimeCounter));
-            tbn[2] = tbnorm, tbn[1] = normalize(cross(tbn[2],tbn[0]));
-            tbnorm = normalize(tbn*hemisphere);
+            const vec3 hemisphere = randomSphere(vec3(fcoord.xy*vec2(viewWidth,viewHeight),frameTimeCounter));
 
+            // hemisphere 
+            //const vec3 hemisphere = randomHemisphereCosine(vec3(fcoord.xy*vec2(viewWidth,viewHeight),frameTimeCounter));
+            //tbn[2] = tbnorm, tbn[1] = normalize(cross(tbn[2],tbn[0]));
+            //tbnorm = normalize(tbn*hemisphere);
+
+            tbnorm = normalize(dot(tbnorm,hemisphere)*hemisphere);
 	        const vec3 pbrspc = texture(colortex2, texcoord).xyz;
 
             

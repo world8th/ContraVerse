@@ -136,7 +136,8 @@ void main() {
 
 	// Color: Putler Edition 
 	//vec4 emission = 1.f.xxxx;//to_linear(texture(lightmap, flmcoord.st));
-	vec4 emission = flmcoord.x>=0.90f ? to_linear(texture(lightmap, flmcoord.st))*2.f : 1.f.xxxx;
+	const bool isEmission = flmcoord.x>=0.90f;
+	vec4 emission = isEmission ? to_linear(texture(lightmap, flmcoord.st))*2.f : 1.f.xxxx;
 	vec4 color = to_linear(texture(tex, adjtx.st)) * emission * fcolor;
 
 	//if (flmcoord.s > 0.0f) emission.xyz *= 1.f + 19.f*(flmcoord.s*(1.f-flmcoord.t));
