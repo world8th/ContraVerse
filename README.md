@@ -17,8 +17,8 @@ New Minecraft shader pack by HelixD. Inspired by some going guy...
 - Deferred texturing for solid blocks (transparents will shaded in gbuffers shaders due POM feature)
 - Hash based alpha channel (and more stability)
 - (WIP) More perfect transparency (OIT)
-- (DECLINED) Voxelization and ray-tracing 
-- (DECLINED) Ray-traced shadows and GI
+- (WIP) Voxelization and ray-tracing 
+- (WIP) Ray-traced shadows and GI
 - (TODO) Perfect screen-space reflections
 - (TODO) Parallax occlusion mapping
 - (TODO) Volumetric clouds post-process
