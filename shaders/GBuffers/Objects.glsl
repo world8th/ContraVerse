@@ -11,6 +11,7 @@ gin vec4 flmcoord;
 gin vec4 fcolor;
 flat gin ivec4 fparametric;
 flat gin int isSemiTransparent;
+flat gin int isPlanarReflection;
 #endif
 
 // From Vertex shader input
@@ -39,7 +40,7 @@ vec4 correctNormal() {
 // GSO input
 #ifdef GSH
 layout(triangles) in;
-layout(triangle_strip, max_vertices = 3) out;
+layout(triangle_strip, max_vertices = 6) out;
 #endif
 
 // FTU input 
@@ -92,11 +93,20 @@ void main() {
 
 #ifdef FSH
 
-	vec2 fcoord = gl_FragCoord.xy/vec2(1.f,viewHeight);///vec2(viewWidth,viewHeight);
+	vec2 fcoord = gl_FragCoord.xy/vec2(1.f,1.f);///vec2(viewWidth,viewHeight);
+
+	// is transparency space?
 	if (isSemiTransparent == 1) {
-		fcoord.x = (fcoord.x-(viewWidth.x*0.5f))/(viewWidth.x*0.5f);
+		fcoord.x = (fcoord.x-(viewWidth*0.5f))/(viewWidth*0.5f);
 	} else {
-		fcoord.x = fcoord.x/(viewWidth.x*0.5f);
+		fcoord.x = fcoord.x/(viewWidth*0.5f);
+	}
+
+	// is reflected space?
+	if (isPlanarReflection == 1) {
+		fcoord.y = (fcoord.y-(viewHeight*0.5f))/(viewHeight*0.5f);
+	} else {
+		fcoord.y = fcoord.y/(viewHeight*0.5f);
 	}
 
 

@@ -46,7 +46,10 @@ void main() {
 	vnormal = correctNormal(), vtangent = vec4(at_tangent.xyz, 0.f);
 	gl_Position = scrnSpace;
 	gl_Position.xyz /= gl_Position.w;
-	gl_Position.x = gl_Position.x * 0.5f + 0.5f;
+	gl_Position.xy = gl_Position.xy * 0.5f + 0.5f;
+	gl_Position.x = gl_Position.x * 0.5f + 0.0f;
+	gl_Position.y = gl_Position.y * 0.5f + 0.0f;
+	gl_Position.xy = gl_Position.xy * 2.f - 1.f;
 	gl_Position.xyz *= gl_Position.w;
 	gl_FogFragCoord = length(viewSpace.xyz);
 
@@ -56,10 +59,10 @@ void main() {
 
 	//discard;
 
-	vec2 fcoord = gl_FragCoord.xy/vec2(viewWidth,viewHeight);
-	fcoord.x = fma(fcoord.x, 2.f, -1.f);
+	vec2 fcoord = gl_FragCoord.xy/vec2(viewWidth*0.5f,viewHeight*0.5f);
+	fcoord = fract(fcoord);
 
-	vec4 vpos = vec4(fcoord.xy,gl_FragCoord.z,1.f);
+	vec4 vpos = vec4(fcoord.xy * 2.f - 1.f,gl_FragCoord.z,1.f);
 	vpos.xy = fma(vpos.xy,2.f.xx,-1.f.xx);
 	vpos = gbufferProjectionInverse * vpos;
     vpos.xyz /= vpos.w;

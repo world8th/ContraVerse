@@ -37,7 +37,7 @@ void main() {
         const vec2 shadowsize = textureSize(shadowcolor0,0);
         const vec2 buffersize = textureSize(colortex0,0);
 
-        const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,1.f)),2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
+        const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,2.f)),2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
         const vec4 cameraNormal = vec4(texp[1].xyz*2.f-1.f,0.f);
         const vec4 cameraSPosition = ScreenSpaceToCameraSpace(screenSpaceCorrect);
         const vec4 cameraCenter = CameraCenterView;
@@ -50,14 +50,22 @@ void main() {
         //texp
 
 
-        vec3 fenergy = enrg[1];
+        vec3 fenergy = 1.f.xxx;//enrg[1];
         vec3 fcolor = colp[1], freflc = 0.f.xxx;//fcolor;
     #ifdef ENABLE_REFLECTIONS
-        if (filled >= 0.1f) {
+        if (filled >= 0.1f && fcoord.y < 0.5f && dot(colp[1].xyz,1.f.xxx)<=0.01f) {
+
             // Screen Space Reflection Tracing...
             const vec4 ssrPos = EfficientSSR(cameraSPosition.xyz+normalize(cameraNormal.xyz)*nshift,reflVector);
-            const vec4 cps = texelFetch(colortex0,ivec2(((ssrPos.xy*0.5f+0.5f)*vec2(0.5f,1.f))*textureSize(colortex0,0)),0).xyzw;
-            vec4 ssrl = vec4(unpack3x2(cps.xyz)[1],cps.w);
+            const ivec2 ssrTx = ivec2(((ssrPos.xy*0.5f+0.5f)*vec2(0.5f,0.5f))*textureSize(colortex0,0));
+            const vec4 cps = texelFetch(colortex0,ssrTx.xy,0).xyzw;
+
+            // Apply Shadow Mapping for SSLR
+            const mat2x3 colp = unpack3x2(texelFetch(gbuffers0,ssrTx.xy,0).xyz);
+            const mat2x3 ltps = unpack3x2(texelFetch(gbuffers1,ssrTx.xy,0).xyz);
+            const mat2x3 texp = unpack3x2(texelFetch(gbuffers2,ssrTx.xy,0).xyz);
+            const vec3 fcolor = colp[1], fdiffc = 0.f.xxx;
+            const vec4 ssrl = vec4(unpack3x2(cps.xyz)[1],cps.w) * vec4(fcolor,1.f);
 
             // Voxel Space Reflection Tracing, Sampling and Shading... 
             const vec4 modelNormal = cameraNormal*gbufferModelView;
@@ -154,6 +162,6 @@ void main() {
     #endif
 
         gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),fcolor)),texture(gbuffers1,fcoord.xy).w);
-        gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),freflc)),1.f);
+        gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),freflc+colp[1].xyz)),1.f); // Shadow Shading + Reflections GI summary... 
     #endif
 }

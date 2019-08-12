@@ -23,11 +23,11 @@ void main(){
         mat2x3 colp = unpack3x2(texture(gbuffers0,fcoord.xy).xyz);
         mat2x3 ltps = unpack3x2(texture(gbuffers1,fcoord.xy).xyz);
         mat2x3 texp = unpack3x2(texture(gbuffers2,fcoord.xy).xyz);
-        vec3 fcolor = colp[1], fdiffc = 0.f.xxx;
+        vec3 fcolor = /*colp[1]*/1.f.xxx, fdiffc = 0.f.xxx;
         const float filled = texture(gbuffers0,fcoord.xy).w;
         
 
-        const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,1.f)),2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
+        const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,2.f)),2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
         const vec4 cameraNormal = vec4(texp[1].xyz*2.f-1.f,0.f);
         const vec4 cameraSPosition = ScreenSpaceToCameraSpace(screenSpaceCorrect);
         const vec4 cameraCenter = CameraCenterView;
@@ -63,8 +63,8 @@ void main(){
 
         }
         
-        gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),fcolor)),texture(gbuffers1,fcoord.xy).w);
-        gl_FragData[1] = vec4(texture(gbuffers0,fcoord.xy));
+        gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),fcolor)),texture(gbuffers1,fcoord.xy).w); // shading color 
+        gl_FragData[1] = vec4(texture(gbuffers0,fcoord.xy)); // original color 
         //gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),fdiffc)),1.f);
     #endif
 }

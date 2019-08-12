@@ -1,6 +1,10 @@
 // configs of buffers
 const int shadowMapResolution = 8192;
 
+// hdpi depth buffers
+uniform sampler2D depthtex0;
+uniform sampler2D depthtex1;
+
 #if defined(FSH) && defined(COMPOSITE)
 /*
 
@@ -40,10 +44,6 @@ uniform sampler2D colortex0;
 uniform sampler2D colortex1;
 uniform sampler2D colortex2;
 uniform sampler2D colortex3;
-
-// hdpi depth buffers
-uniform sampler2D depthtex0;
-uniform sampler2D depthtex1;
 
 // used by GBuffers, deferred and some sort of composite ()
 uniform sampler2D colortex4; // colortex4

@@ -68,7 +68,7 @@ void main(){
         // fill main buffer with sky-color
         float filled = texture(gbuffers0,fcoord.xy).w;
         if (fcoord.x < 0.5f && filled < 0.1f) {
-            const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,1.f)),2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
+            const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,2.f)),2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
             const vec4 cameraNormal = vec4(ltps[1].xyz*2.f-1.f,0.f);
             const vec4 cameraSPosition = ScreenSpaceToCameraSpace(screenSpaceCorrect);
             const vec4 cameraCenter = CameraCenterView;
