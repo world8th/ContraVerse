@@ -28,6 +28,11 @@ float random( in vec3  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 float random( in vec4  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 
 
+highp vec2 randomH2( in float x ) { return halfConstruct(hash(floatBitsToUint(x))); }
+highp vec2 randomH2( in vec2  v ) { return halfConstruct(hash(floatBitsToUint(v))); }
+highp vec2 randomH2( in vec3  v ) { return halfConstruct(hash(floatBitsToUint(v))); }
+highp vec2 randomH2( in vec4  v ) { return halfConstruct(hash(floatBitsToUint(v))); }
+
 
 
 #ifdef EXPERIMENTAL_UNORM16_DIRECTION

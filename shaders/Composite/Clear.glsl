@@ -5,7 +5,7 @@ gin vec4 texcoord;
 
 
 #ifdef FSH
-/* DRAWBUFFERS:45671 */
+/* DRAWBUFFERS:456712 */
 #endif
 
 void main(){
@@ -25,5 +25,6 @@ void main(){
         gl_FragData[2] = vec4(0.f);
         gl_FragData[3] = vec4(0.f);
         gl_FragData[4] = texture(gbuffers1,fcoord.xy);
+        gl_FragData[5] = texture(colortex3,fcoord.xy);
     #endif
 }

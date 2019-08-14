@@ -162,6 +162,6 @@ void main() {
     #endif
 
         gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),fcolor)),texture(gbuffers1,fcoord.xy).w);
-        gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),freflc+colp[1].xyz)),1.f); // Shadow Shading + Reflections GI summary... 
+        gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),freflc+colp[1].xyz)),1.f); // Shadow Shading + Reflections GI summary... (TODO: Fix Shadows)
     #endif
 }

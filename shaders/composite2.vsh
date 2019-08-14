@@ -3,4 +3,4 @@
 
 #define VSH
 #define COMPOSITE 2
-#include "/Composite/Combiner.glsl"
+#include "/Composite/Denoise.glsl"
