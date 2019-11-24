@@ -19,7 +19,7 @@ for (int r = 0; r < 1; r++) {
 #endif
 
     // 
-    const vec4 cameraPosition = gbufferModelViewInverse * vec4(0.f.xxx,1.f);
+    //const vec4 cameraPosition = gbufferModelViewInverse * vec4(0.f.xxx,1.f); // WARNING! 
     for (int i = 0; i < 3; i++) {
         fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
         
@@ -37,6 +37,9 @@ for (int r = 0; r < 1; r++) {
 
         vertex.xyz /= vertex.w;
         vertex.xyz += cameraPosition.xyz;
+
+        fposition = vertex;
+        fposition.w = 0.f;//height;
 
         //vertex.xyz = floor(vertex.xyz);
 
@@ -68,16 +71,20 @@ for (int r = 0; r < 1; r++) {
     EndPrimitive();
 
 
-/*
-    // 
+    //const vec4 packet = texture(gbuffers3,vec2(0.25f));
+    //const mat2x3 texp = unpack3x2(packet.xyz);
+    const float height = texture(gbuffers3,vec2(0.f)).x;
+
+    // Planar Reflection 
     for (int i = 0; i < 3; i++) {
         fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
         
         // 
         isSemiTransparent = semiTransparent;
+        isPlanarReflection = 1;
 
         // get world space vertex
-        vec4 vertex = gl_in[i].gl_Position;
+        vec4 vertex = gl_in[i].gl_Position; /// gl_in[i].gl_Position.w;
 
         // integrity normal 
         fnormal *= gbufferModelViewInverse, ftangent *= gbufferModelViewInverse;
@@ -89,16 +96,19 @@ for (int r = 0; r < 1; r++) {
         vertex.xyz += cameraPosition.xyz;
 
 
-        const vec4 screenSpaceCorrect = vec4(0.0f.xx, texture(depthtex0,vec2(0.25f,0.25f)).x, 1.f);
-        const vec4 wmap = CameraSpaceToModelSpace(ScreenSpaceToCameraSpace(screenSpaceCorrect));
-        const float height = wmap.y + cameraPosition.y;
+
+        //const float height = //texp[1].y;
+
+        fposition = vertex;
+        fposition.w = height;
 
 
         // reflect on picked height
+        
         vertex.y -= height;
         vertex.y *= -1.f;
         vertex.y += height;
-
+        //vertex.xyz += cameraPosition.xyz;
 
         // project into screen space 
         vertex.xyz -= cameraPosition.xyz;
@@ -115,7 +125,7 @@ for (int r = 0; r < 1; r++) {
         // render-side
         vertex.x = fma(vertex.x, 0.5f, float(semiTransparent)*0.5f);
         vertex.y = fma(vertex.y, 0.5f, 0.5f);
-        
+
         // re-correct screen space coordination for rendering
         vertex.xy = fma(vertex.xy, 2.f.xx, -1.f.xx);
 
@@ -126,5 +136,4 @@ for (int r = 0; r < 1; r++) {
         EmitVertex();
     }
     EndPrimitive();
-*/
 }

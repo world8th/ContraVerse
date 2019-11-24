@@ -3,4 +3,5 @@
 
 #define VSH
 #define COMPOSITE 1
-#include "/Composite/Reflection.glsl"
+
+#include "/Composite/Clear.glsl"

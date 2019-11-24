@@ -1,19 +1,12 @@
-
 #include "/Globals/Header.glsl"
 
 gin vec4 texcoord;
 
-uniform ivec2 atlasSize;
+
 
 #ifdef FSH
 /* DRAWBUFFERS:456712 */
 #endif
-
-
-const float nshift = 0.0001f;
-
-#define ENABLE_REFLECTIONS
-
 
 void main(){
     #ifdef VSH
@@ -33,14 +26,5 @@ void main(){
         gl_FragData[3] = vec4(0.f);
         gl_FragData[4] = texture(gbuffers1,fcoord.xy);
         gl_FragData[5] = texture(colortex3,fcoord.xy);
-
-        const vec2 size = textureSize(colortex3,0);
-        if (texcoord.x >= 0.f && texcoord.y >= 0.f && texcoord.x < (1.f/size.x) && texcoord.y < (1.f/size.y)) {
-            Voxel vox = TraceVoxel(fract(cameraPosition),normalize(vec3(0.0f,-0.9999f,0.0f)));
-            const float height = vox.position.y + cameraPosition.y;
-            gl_FragData[3].x = height + 1.f - fract(cameraPosition.y);
-            gl_FragData[3].w = 1.f;
-        };
-
     #endif
 }

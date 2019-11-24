@@ -53,7 +53,7 @@ void main(){
             //tbn[2] = tbnorm, tbn[1] = normalize(cross(tbn[2],tbn[0]));
             //tbnorm = normalize(tbn*hemisphere);
 
-            tbnorm = normalize(dot(tbnorm,hemisphere)*hemisphere);
+            //tbnorm = normalize(dot(tbnorm,hemisphere)*hemisphere);
 	        const vec3 pbrspc = texture(colortex2, texcoord).xyz;
 
             

@@ -1,3 +1,4 @@
+#define ENABLE_NANO_VRT
 #include "/Globals/Header.glsl"
 
 // From Geometry shader input
@@ -9,8 +10,10 @@ gin vec4 ftexcoord;
 gin vec4 ftexcoordam;
 gin vec4 flmcoord;
 gin vec4 fcolor;
+gin vec4 fposition;
 flat gin ivec4 fparametric;
 flat gin int isSemiTransparent;
+flat gin int isPlanarReflection;
 #endif
 
 // From Vertex shader input

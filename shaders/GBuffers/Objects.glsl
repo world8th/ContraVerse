@@ -1,4 +1,6 @@
+//#define ENABLE_NANO_VRT
 #include "/Globals/Header.glsl"
+
 
 // From Geometry shader input
 #if (defined(FSH) || defined(GSH))
@@ -9,6 +11,7 @@ gin vec4 ftexcoord;
 gin vec4 ftexcoordam;
 gin vec4 flmcoord;
 gin vec4 fcolor;
+gin vec4 fposition;
 flat gin ivec4 fparametric;
 flat gin int isSemiTransparent;
 flat gin int isPlanarReflection;
@@ -40,7 +43,7 @@ vec4 correctNormal() {
 // GSO input
 #ifdef GSH
 layout(triangles) in;
-layout(triangle_strip, max_vertices = 6) out;
+layout(triangle_strip, max_vertices = 12) out;
 #endif
 
 // FTU input 
@@ -126,7 +129,7 @@ void main() {
 	mat3 tbn = mat3(normalize(tangent.xyz),normalize(cross(tnormal.xyz,tangent.xyz)),normalize(tnormal.xyz));
 	vec3 tbnorm = normalize(tbn*(texture(normals , adjtx.st).xyz*2.f-1.f));
 	tbn[2] = tbnorm, tbn[1] = normalize(cross(tbn[2],tbn[0]));
-	tbnorm = normalize(tbn*hemisphere);
+	//tbnorm = normalize(tbn*hemisphere);
 
 	// Yob'Apple Face ID
 #if defined(TERRAIN) || defined(BLOCK) || defined(WATER)
@@ -180,18 +183,27 @@ void main() {
 #else
 		const bool deferred = false;
 #endif
-		if (deferred) {
-			const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas); // Holy Star Wars!
-			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz*emission.xyz)),alpas);
-			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);
-			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(torig.xy/atlas,0.f),tangent.xyz*0.5f+0.5f)),alpas);
-			gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);
-		} else {
-			gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),color.xyz)),alpas);
-			gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);
-			gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(pbrspc.yz,0.f),tbnorm.xyz*0.5f+0.5f)),alpas);
-			gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);
-		}
+
+		if (isPlanarReflection != 1 || ceil(fposition.y-0.01f) >= ceil(fposition.w-0.01f)+0.01f) {
+			if (deferred) {
+				const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas); // Holy Star Wars!
+				gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz*emission.xyz)),alpas);
+				gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);
+				gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(torig.xy/atlas,0.f),tangent.xyz*0.5f+0.5f)),alpas);
+				gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),0.f);
+				//gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),alpas);
+			} else {
+				gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),color.xyz)),alpas);
+				gl_FragData[1] = vec4(pack3x2(mat2x3(vec3(flmcoord.xy,0.f),tnormal.xyz*0.5f+0.5f)),alpas);
+				gl_FragData[2] = vec4(pack3x2(mat2x3(vec3(pbrspc.yz,0.f),tbnorm.xyz*0.5f+0.5f)),alpas);
+				gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),0.f.xxx)),0.f);
+			};
+
+			//const vec4 wnormal = gbufferModelViewInverse*vec4(tnormal.xyz,0.f);
+			//if (dot(normalize(wnormal.xyz),vec3(0.f,1.f,0.f))>0.99f && isPlanarReflection != 1 && isSemiTransparent != 1) {
+			//	gl_FragData[3] = vec4(pack3x2(mat2x3(vec3(0.f.xx,0.f),vec3(fposition.xyz))),alpas);
+			//};
+		};
     }
 
 #endif

@@ -3,5 +3,6 @@
 
 #define VSH
 #define TERRAIN
-#define COMPOSITE
+#define COMPOSITE -1
+
 #include "/Composite/Final.glsl"

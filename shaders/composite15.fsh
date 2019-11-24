@@ -3,4 +3,5 @@
 
 #define FSH
 #define COMPOSITE 15
-#include "/Composite/Clear.glsl"
+
+#include "/Composite/Debug.glsl"

@@ -64,6 +64,13 @@ uniform sampler2D shadowtex1;
 // ...
 #endif
 
+#ifdef ENABLE_NANO_VRT
+uniform sampler2D shadowcolor0;
+uniform sampler2D shadowcolor1;
+uniform sampler2D shadowtex0;
+uniform sampler2D shadowtex1;
+#endif
+
 
 // 
 #ifdef GBUFFERS

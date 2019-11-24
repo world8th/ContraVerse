@@ -3,4 +3,4 @@
 
 #define VSH
 #define COMPOSITE 0
-#include "/Composite/Shading.glsl"
+#include "/Composite/Combine.glsl"

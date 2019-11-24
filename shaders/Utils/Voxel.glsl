@@ -1,4 +1,3 @@
-
 const vec3 tileSize = vec3(16.f,1.f,16.f), aeraSize = vec3(64.f,64.f,64.f), contraSize = vec3(128.f,64.f,128.f);
 
 #define SHADOW_SIZE (float(shadowMapResolution)-contraSize.x) // TODO: better shadow map correction
