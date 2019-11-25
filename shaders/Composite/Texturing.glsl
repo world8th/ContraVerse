@@ -6,7 +6,7 @@ gin vec4 texcoord;
 uniform ivec2 atlasSize;
 
 #ifdef FSH
-/* DRAWBUFFERS:46 */
+/* DRAWBUFFERS:146 */
 #endif
 
 const int PRETEXTURED = 0, COORDINATED = 1;
@@ -67,7 +67,7 @@ void main(){
 
         // fill main buffer with sky-color
         float filled = texture(gbuffers0,fcoord.xy).w;
-        if (fcoord.x < 0.5f && filled < 0.1f) {
+        if (fcoord.x < 0.5f && fcoord.y < 0.5f && filled < 0.1f) {
             const vec4 screenSpaceCorrect = vec4(fma(fract(fcoord.xy*vec2(2.f,2.f)),2.0f.xx,-1.f.xx), texture(depthtex0,fcoord.xy).x, 1.f);
             const vec4 cameraNormal = vec4(ltps[1].xyz*2.f-1.f,0.f);
             const vec4 cameraSPosition = ScreenSpaceToCameraSpace(screenSpaceCorrect);
@@ -105,7 +105,8 @@ void main(){
         }
 
         // send modified color 
-        gl_FragData[0] = vec4(pack3x2(colp),filled);
-        gl_FragData[1] = vec4(pack3x2(texp),texture(gbuffers2,fcoord.xy).w);
+        gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(0.f),vec3(filled < 0.1f ? 0.f : 1.f, 0.f,0.f))),1.f);
+        gl_FragData[1] = vec4(pack3x2(colp),filled);
+        gl_FragData[2] = vec4(pack3x2(texp),1.f);
     #endif
 }

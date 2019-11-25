@@ -29,10 +29,18 @@ void main() {
     
         //mat2x3 colp = unpack3x2(texture(colortex0,fcoord.xy).xyz);
         
+        float alph = texture(gbuffers0,fcoord.xy+vec2(0.0f,0.f)).w;
+        float alpt = texture(gbuffers0,fcoord.xy+vec2(0.5f,0.f)).w;
+
         float dp = texture(depthtex0,fcoord.xy).x, dh = texture(depthtex0,hcoord.xy).x;
-        //const float filled = texture(colortex0,fcoord.xy).w;
         mat2x3 rtps = unpack3x2(texture(gbuffers0,fcoord.xy).xyz);
         mat2x3 rtph = unpack3x2(texture(gbuffers0,hcoord.xy).xyz);
+        mat2x3 sdps = unpack3x2(texture(colortex1,fcoord.xy).xyz);
+
+        float tdp = texture(depthtex0,fcoord.xy+vec2(0.5f,0.f)).x, tdh = texture(depthtex0,hcoord.xy+vec2(0.5f,0.f)).x;
+        float fcp = texture(gbuffers0,fcoord.xy+vec2(0.5f,0.f)).w, fch = texture(gbuffers0,hcoord.xy+vec2(0.5f,0.f)).w;
+        mat2x3 trps = unpack3x2(texture(gbuffers0,fcoord.xy+vec2(0.5f,0.f)).xyz);
+        mat2x3 trph = unpack3x2(texture(gbuffers0,hcoord.xy+vec2(0.5f,0.f)).xyz);
         mat2x3 texp = unpack3x2(texture(gbuffers2,fcoord.xy).xyz);
         //mat2x3 colp = unpack3x2(texture(gbuffers0,fcoord.xy).xyz);
         //mat2x3 colh = unpack3x2(texture(gbuffers0,hcoord.xy).xyz);
@@ -57,9 +65,14 @@ void main() {
         const vec4 subPos = CameraSpaceToModelSpace(vec4(shadowLightPosition.xyz,1.f));
         
 
+        // combine transparents with physical 
+        if (fcoord.x < 0.5f && fcoord.y < 0.5f && tdp <= dp && fcp > 0.1f && (alph > 0.1f || alpt > 0.1f)) { rtps[1] = mix(rtps[1],trps[1],1.f); } 
+        if (fcoord.x < 0.5f && fcoord.y < 0.5f && tdh <= dh && fch > 0.1f) { rtph[1] = mix(rtph[1],trph[1],1.f); } 
 
-
+        // add planar reflections 
         if (dp <= dh && dot(modelNormal.xyz,vec3(0.f,1.f,0.f)) > 0.99f && fcoord.x < 0.5f && fcoord.y < 0.5f) { rtps[1].xyz = mix( rtps[1].xyz,rtph[1].xyz,0.25f); };
+
+        // final color 
         gl_FragData[0] = vec4(rtps[1].xyz,1.f);
 
         //const vec2 fcoord = texcoord.xy; //* vec2(0.5f,0.5f);

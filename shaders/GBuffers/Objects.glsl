@@ -184,7 +184,7 @@ void main() {
 		const bool deferred = false;
 #endif
 
-		if (isPlanarReflection != 1 || ceil(fposition.y-0.01f) >= ceil(fposition.w-0.01f)+0.01f) {
+		if (isPlanarReflection != 1 || fposition.y > fposition.w+0.01f) {
 			if (deferred) {
 				const vec2 atlas = vec2(atlasSize)/TEXTURE_SIZE, torig = floor(adjtx.xy*atlas), tcord = fract(adjtx.xy*atlas); // Holy Star Wars!
 				gl_FragData[0] = vec4(pack3x2(mat2x3(vec3(tcord.xy,0.f),fcolor.xyz*emission.xyz)),alpas);

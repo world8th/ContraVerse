@@ -6,7 +6,7 @@ gin vec4 texcoord;
 uniform ivec2 atlasSize;
 
 #ifdef FSH
-/* DRAWBUFFERS:456712 */
+/* DRAWBUFFERS:45671 */
 #endif
 
 
@@ -31,8 +31,8 @@ void main(){
         gl_FragData[1] = vec4(0.f);//texture(gbuffers1,fcoord.xy);//vec4(0.f);
         gl_FragData[2] = vec4(0.f);
         gl_FragData[3] = vec4(0.f);
-        gl_FragData[4] = texture(gbuffers1,fcoord.xy);
-        gl_FragData[5] = texture(colortex3,fcoord.xy);
+        gl_FragData[4] = vec4(0.f);
+        //gl_FragData[5] = texture(colortex3,fcoord.xy);
 
         const vec2 size = textureSize(colortex3,0);
         if (texcoord.x >= 0.f && texcoord.y >= 0.f && texcoord.x < (1.f/size.x) && texcoord.y < (1.f/size.y)) {
