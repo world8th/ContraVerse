@@ -135,6 +135,7 @@ uniform float frameTimeCounter;
 uniform vec3 sunPosition;
 uniform vec3 shadowLightPosition;
 uniform int worldTime;
+uniform int instanceId;
 
 //uniform vec3 sunAngle;
 

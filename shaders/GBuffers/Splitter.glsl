@@ -20,121 +20,126 @@ for (int r = 0; r < 1; r++) {
 
     // 
     //const vec4 cameraPosition = gbufferModelViewInverse * vec4(0.f.xxx,1.f); // WARNING! 
-    for (int i = 0; i < 3; i++) {
-        fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
-        
-        // 
-        isSemiTransparent = semiTransparent;
+    if (instanceId == 0) {
+        for (int i = 0; i < 3; i++) {
+            fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
+            
+            // 
+            isSemiTransparent = semiTransparent;
 
-        // get world space vertex
-        vec4 vertex = gl_in[i].gl_Position;
+            // get world space vertex
+            vec4 vertex = gl_in[i].gl_Position;
 
-        // integrity normal 
-        fnormal *= gbufferModelViewInverse, ftangent *= gbufferModelViewInverse;
+            // integrity normal 
+            fnormal *= gbufferModelViewInverse, ftangent *= gbufferModelViewInverse;
 
-        // project into world space 
-        vertex = gbufferModelViewInverse * gbufferProjectionInverse * vertex;
+            // project into world space 
+            vertex = gbufferModelViewInverse * gbufferProjectionInverse * vertex;
 
-        vertex.xyz /= vertex.w;
-        vertex.xyz += cameraPosition.xyz;
+            vertex.xyz /= vertex.w;
+            vertex.xyz += cameraPosition.xyz;
 
-        fposition = vertex;
-        fposition.w = 0.f;//height;
+            fposition = vertex;
+            fposition.w = 0.f;//height;
 
-        //vertex.xyz = floor(vertex.xyz);
+            //vertex.xyz = floor(vertex.xyz);
 
-        // project into screen space 
-        vertex.xyz -= cameraPosition.xyz;
-        vertex.xyz *= vertex.w;
-        vertex = gbufferProjection * gbufferModelView * vertex;
-        vertex.xyz /= vertex.w;
+            // project into screen space 
+            vertex.xyz -= cameraPosition.xyz;
+            vertex.xyz *= vertex.w;
+            vertex = gbufferProjection * gbufferModelView * vertex;
+            vertex.xyz /= vertex.w;
 
-        // resolution correction
-        vertex.xy = fma(vertex.xy, 0.5f.xx, 0.5f.xx);
+            // resolution correction
+            vertex.xy = fma(vertex.xy, 0.5f.xx, 0.5f.xx);
 
-        // assign screen space coordinates
-        //fscreencoord = vertex;
+            // assign screen space coordinates
+            //fscreencoord = vertex;
 
-        // render-side
-        vertex.x = fma(vertex.x, 0.5f, float(semiTransparent)*0.5f);
-        vertex.y = fma(vertex.y, 0.5f, 0.0f);
-        
-        // re-correct screen space coordination for rendering
-        vertex.xy = fma(vertex.xy, 2.f.xx, -1.f.xx);
+            // render-side
+            vertex.x = fma(vertex.x, 0.5f, float(semiTransparent)*0.5f);
+            vertex.y = fma(vertex.y, 0.5f, 0.0f);
+            
+            // re-correct screen space coordination for rendering
+            vertex.xy = fma(vertex.xy, 2.f.xx, -1.f.xx);
 
-        // finally emit vertex
-        vertex.xyz *= vertex.w;
-        //vertex.w = 1.f;
-        gl_Position = vertex;
-        EmitVertex();
-    }
-    EndPrimitive();
-
-
-    //const vec4 packet = texture(gbuffers3,vec2(0.25f));
-    //const mat2x3 texp = unpack3x2(packet.xyz);
-    const float height = texture(gbuffers3,vec2(0.f)).x;
-
-    // Planar Reflection 
-    for (int i = 0; i < 3; i++) {
-        fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
-        
-        // 
-        isSemiTransparent = semiTransparent;
-        isPlanarReflection = 1;
-
-        // get world space vertex
-        vec4 vertex = gl_in[i].gl_Position; /// gl_in[i].gl_Position.w;
-
-        // integrity normal 
-        fnormal *= gbufferModelViewInverse, ftangent *= gbufferModelViewInverse;
-
-        // project into world space 
-        vertex = gbufferModelViewInverse * gbufferProjectionInverse * vertex;
-
-        vertex.xyz /= vertex.w;
-        vertex.xyz += cameraPosition.xyz;
+            // finally emit vertex
+            vertex.xyz *= vertex.w;
+            //vertex.w = 1.f;
+            gl_Position = vertex;
+            EmitVertex();
+        }
+    };
+    //EndPrimitive();
 
 
+    if (instanceId == 1) {
+        //const vec4 packet = texture(gbuffers3,vec2(0.25f));
+        //const mat2x3 texp = unpack3x2(packet.xyz);
+        const float height = texture(gbuffers3,vec2(0.f)).x;
 
-        //const float height = //texp[1].y;
+        // Planar Reflection 
+        for (int i = 0; i < 3; i++) {
+            fcolor = vcolor[i], ftexcoord = vtexcoord[i], ftexcoordam = vtexcoordam[i], flmcoord = vlmcoord[i], fparametric = vparametric[i], fnormal = vnormal[i], ftangent = vtangent[i];
+            
+            // 
+            isSemiTransparent = semiTransparent;
+            isPlanarReflection = 1;
 
-        fposition = vertex;
-        fposition.w = height;
+            // get world space vertex
+            vec4 vertex = gl_in[i].gl_Position; /// gl_in[i].gl_Position.w;
+
+            // integrity normal 
+            fnormal *= gbufferModelViewInverse, ftangent *= gbufferModelViewInverse;
+
+            // project into world space 
+            vertex = gbufferModelViewInverse * gbufferProjectionInverse * vertex;
+
+            vertex.xyz /= vertex.w;
+            vertex.xyz += cameraPosition.xyz;
 
 
-        // reflect on picked height
-        
-        vertex.y -= height;
-        vertex.y *= -1.f;
-        vertex.y += height;
-        //vertex.xyz += cameraPosition.xyz;
 
-        // project into screen space 
-        vertex.xyz -= cameraPosition.xyz;
-        vertex.xyz *= vertex.w;
-        vertex = gbufferProjection * gbufferModelView * vertex;
-        vertex.xyz /= vertex.w;
+            //const float height = //texp[1].y;
 
-        // resolution correction
-        vertex.xy = fma(vertex.xy, 0.5f.xx, 0.5f.xx);
+            fposition = vertex;
+            fposition.w = height;
 
-        // assign screen space coordinates
-        //fscreencoord = vertex;
 
-        // render-side
-        vertex.x = fma(vertex.x, 0.5f, float(semiTransparent)*0.5f);
-        vertex.y = fma(vertex.y, 0.5f, 0.5f);
+            // reflect on picked height
+            
+            fnormal.y *= -1.f;
+            vertex.y -= height;
+            vertex.y *= -1.f;
+            vertex.y += height;
+            //vertex.xyz += cameraPosition.xyz;
 
-        // re-correct screen space coordination for rendering
-        vertex.xy = fma(vertex.xy, 2.f.xx, -1.f.xx);
+            // project into screen space 
+            vertex.xyz -= cameraPosition.xyz;
+            vertex.xyz *= vertex.w;
+            vertex = gbufferProjection * gbufferModelView * vertex;
+            vertex.xyz /= vertex.w;
 
-        // finally emit vertex
-        vertex.xyz *= vertex.w;
-        //vertex.w = 1.f;
-        gl_Position = vertex;
-        EmitVertex();
-    }
+            // resolution correction
+            vertex.xy = fma(vertex.xy, 0.5f.xx, 0.5f.xx);
+
+            // assign screen space coordinates
+            //fscreencoord = vertex;
+
+            // render-side
+            vertex.x = fma(vertex.x, 0.5f, float(semiTransparent)*0.5f);
+            vertex.y = fma(vertex.y, 0.5f, 0.5f);
+
+            // re-correct screen space coordination for rendering
+            vertex.xy = fma(vertex.xy, 2.f.xx, -1.f.xx);
+
+            // finally emit vertex
+            vertex.xyz *= vertex.w;
+            //vertex.w = 1.f;
+            gl_Position = vertex;
+            EmitVertex();
+        }
+    };
 
     EndPrimitive();
 }

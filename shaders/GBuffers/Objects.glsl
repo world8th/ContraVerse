@@ -1,6 +1,7 @@
 //#define ENABLE_NANO_VRT
 #include "/Globals/Header.glsl"
 
+const int countInstances = 2;
 
 // From Geometry shader input
 #if (defined(FSH) || defined(GSH))
